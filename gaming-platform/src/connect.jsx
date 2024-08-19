@@ -51,9 +51,13 @@ export default function Connect() {
   const [originalEventList, setOriginalEventList] = useState([]);
   const [eventDescription, setEventDescription] = useState('');
   const [eventLocation, setEventLocation] = useState('');
+  const [eventTime, setEventTime] = useState('17:00');
   const [eventDate, setEventDate] = useState('');
+  const [eventLink, setEventLink] = useState('');
   const [upcomingEvents, setUpcomingEvents] = useState([]);
   const [emptyTitle, setEmptyTitle] = useState(false);
+  const [emptyLink, setEmptyLink] = useState(false);
+
   const [emptyDescription, setEmptyDescription] = useState(false);
   const [emptyLocation, setEmptyLocation] = useState(false);
   const [emptyDate, setEmptyDate] = useState(false);
@@ -108,6 +112,7 @@ export default function Connect() {
     event.preventDefault();
     let dali = 0;
     try {
+      setShowNoPosts(false);
       setLoading(true);
       const userRef = doc(db, 'users', currentUser.uid);
       const userSnap = await getDoc(userRef);
@@ -129,8 +134,9 @@ export default function Connect() {
         setLoading(false);
         dali = 1;
       }
-      if (eventLocation === '') {
+      if (eventLocation === '' && eventLink === '') {
         setEmptyLocation(true);
+        setEmptyLink(true);
         setLoading(false);
         dali = 1;
       }
@@ -152,6 +158,8 @@ export default function Connect() {
           description: eventDescription,
           location: eventLocation,
           date: eventDate,
+          link: eventLink,
+          time: eventTime,
           author: {
             name: username,
             id: currentUser.uid,
@@ -168,7 +176,7 @@ export default function Connect() {
         const docref = await addDoc(eventCollectionRef, newEvent);
         const eventid = docref.id;
         newEvent.id = eventid;
-        console.log(newEvent);
+
         await updateDoc(userRef, {
           upcomingEvents: arrayUnion(newEvent),
         });
@@ -239,7 +247,6 @@ export default function Connect() {
     setRefresh(!refresh);
   }
   async function deletePost(id) {
-    console.log(id);
     const postDoc = doc(db, 'events', id);
     setUpcomingEvents((prevEvents) => {
       return prevEvents.filter((event) => event.id !== id);
@@ -300,7 +307,6 @@ export default function Connect() {
     }
   }
   async function handleNotGoing(id) {
-    console.log(id);
     const postRef = doc(db, 'events', id);
     const postSnap = await getDoc(postRef);
     const updatedGoing = postSnap
@@ -482,12 +488,33 @@ export default function Connect() {
                   <div className="post-content">{post.description}</div>
                   <div className="post-info">
                     <div className="post-date">
-                      <p>Date:</p>
-                      <p>Location:</p>
+                      Date:
+                      {post.location !== '' && post.link === '' && (
+                        <>Location:</>
+                      )}
+                      {post.location === '' && post.link !== '' && <p>Link:</p>}
+                      {post.location !== '' && post.link !== '' && (
+                        <p>Location:</p>
+                      )}
+                      {post.location !== '' && post.link !== '' && <>Link:</>}
                     </div>
                     <div className="post-location">
-                      <div>{post.date}</div>
-                      <div>{post.location}</div>
+                      <div>
+                        {post.date}
+                        {'  '}
+
+                        <span style={{ color: 'grey', fontSize: '0.9rem' }}>
+                          at
+                        </span>
+                        {'  '}
+                        {post.time}
+                      </div>
+                      <div>{post.location !== '' && post.location}</div>
+                      <div>
+                        {post.location !== '' && post.link !== '' && (
+                          <a href={post.link}>{post.link}</a>
+                        )}
+                      </div>
                     </div>
                   </div>
                   <div className="author2">
@@ -558,8 +585,10 @@ export default function Connect() {
                 setEventTitle('');
               }
               setEventLocation('');
+              setEventLink('');
               setEventDate('');
               setFalseDate(false);
+              setEmptyLink(false);
               Post();
             }}
           >
@@ -608,44 +637,75 @@ export default function Connect() {
               <p className="emptyField">Cannot leave this field empty</p>
             )}
           </div>
-
-          <div className="date-create">
-            <div className="inputFieldLocation">
-              <input
-                type="text"
-                value={eventLocation}
-                placeholder="Location"
-                id="location"
-                className={emptyLocation ? 'invalid' : ''}
-                onChange={(e) => {
-                  setEmptyLocation(false);
-                  setEventLocation(e.target.value);
-                }}
-              />
-              {emptyLocation && (
-                <p className="emptyField">Cannot leave this field empty</p>
-              )}
+          <div className="inputs">
+            <div className="date-create">
+              <div className="inputFieldLocation">
+                <input
+                  type="location"
+                  value={eventLocation}
+                  placeholder="Location"
+                  id="location"
+                  className={emptyLocation ? 'invalid' : ''}
+                  onChange={(e) => {
+                    setEmptyLocation(false);
+                    setEventLocation(e.target.value);
+                  }}
+                />
+                {emptyLocation && (
+                  <p className="emptyField">
+                    At least one field should be filled
+                  </p>
+                )}
+              </div>
+              <div className="inputFieldLink">
+                <input
+                  type="url"
+                  placeholder="Link"
+                  id="link"
+                  value={eventLink}
+                  className={emptyLink ? 'invalid' : ''}
+                  onChange={(e) => {
+                    setEmptyLink(false);
+                    setEventLink(e.target.value);
+                  }}
+                ></input>
+                {emptyLink && (
+                  <p className="emptyField">
+                    At least one field should be filled
+                  </p>
+                )}
+              </div>
             </div>
-            <div className="inputFieldDate">
-              <input
-                type="date"
-                value={eventDate}
-                className={emptyDate ? 'invalidDate' : 'eventDate'}
-                onChange={(e) => {
-                  setEmptyDate(false);
-                  setFalseDate(false);
-                  setEventDate(e.target.value);
-                }}
-              />
-              {emptyDate && (
-                <p className="emptyField">Cannot leave this field empty</p>
-              )}
-              {falseDate && (
-                <p className="emptyField">Please enter a future date</p>
-              )}
+            <div className="LinkTime">
+              <div className="inputFieldDate">
+                <input
+                  type="date"
+                  value={eventDate}
+                  className={emptyDate ? 'invalidDate' : 'eventDate'}
+                  onChange={(e) => {
+                    setEmptyDate(false);
+                    setFalseDate(false);
+                    setEventDate(e.target.value);
+                  }}
+                />
+                {emptyDate && <p className="emptyField">Cannot leave empty</p>}
+                {falseDate && (
+                  <p className="emptyField">Please enter a future date</p>
+                )}
+              </div>
+
+              <div>
+                <input
+                  type="time"
+                  defaultValue="17:00"
+                  className="time"
+                  onChange={(e) => {
+                    setEventTime(e.target.value);
+                  }}
+                ></input>
+              </div>
             </div>
           </div>
-
           <div>
             <button className="login-btn" onClick={createPost}>
               Create Event
@@ -712,12 +772,31 @@ export default function Connect() {
                 <div className="post-content">{post.description}</div>
                 <div className="post-info">
                   <div className="post-date">
-                    <p>Date:</p>
-                    <p>Location:</p>
+                    Date:
+                    {post.location !== '' && post.link === '' && <>Location:</>}
+                    {post.location === '' && post.link !== '' && <p>Link:</p>}
+                    {post.location !== '' && post.link !== '' && (
+                      <p>Location:</p>
+                    )}
+                    {post.location !== '' && post.link !== '' && <>Link:</>}
                   </div>
-                  <div className="post-location2">
-                    <div>{post.date}</div>
-                    <div>{post.location}</div>
+                  <div className="post-location">
+                    <div>
+                      {post.date}
+                      {'  '}
+
+                      <span style={{ color: 'grey', fontSize: '0.9rem' }}>
+                        at
+                      </span>
+                      {'  '}
+                      {post.time}
+                    </div>
+                    <div>{post.location !== '' && post.location}</div>
+                    <div>
+                      {post.location !== '' && post.link !== '' && (
+                        <a href={post.link}>{post.link}</a>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <div className="author2">

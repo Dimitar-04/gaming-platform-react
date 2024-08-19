@@ -99,8 +99,8 @@ export default function Home() {
           const img = new Image();
           img.src = currentUser.photoURL;
 
-          console.log(currentUser.photoURL);
-          setProfilePic(currentUser.photoURL);
+          console.log(img.src);
+          setProfilePic(img.src);
           // img.onload = () => {
           //   console.log(img.src);
           //   setProfilePic(img.src);

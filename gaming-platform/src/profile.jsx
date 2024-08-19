@@ -587,12 +587,39 @@ export default function Profile() {
                         <div className="post-content">{post.description}</div>
                         <div className="post-info">
                           <div className="post-date">
-                            <p>Date:</p>
-                            <p>Location:</p>
+                            Date:
+                            {post.location !== '' && post.link === '' && (
+                              <>Location:</>
+                            )}
+                            {post.location === '' && post.link !== '' && (
+                              <p>Link:</p>
+                            )}
+                            {post.location !== '' && post.link !== '' && (
+                              <p>Location:</p>
+                            )}
+                            {post.location !== '' && post.link !== '' && (
+                              <>Link:</>
+                            )}
                           </div>
                           <div className="post-location">
-                            <div>{post.date}</div>
-                            <div>{post.location}</div>
+                            <div>
+                              {post.date}
+                              {'  '}
+
+                              <span
+                                style={{ color: 'grey', fontSize: '0.9rem' }}
+                              >
+                                at
+                              </span>
+                              {'  '}
+                              {post.time}
+                            </div>
+                            <div>{post.location !== '' && post.location}</div>
+                            <div>
+                              {post.location !== '' && post.link !== '' && (
+                                <a href={post.link}>{post.link}</a>
+                              )}
+                            </div>
                           </div>
                         </div>
                         <div className="author2">
