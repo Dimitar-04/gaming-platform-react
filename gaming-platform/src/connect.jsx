@@ -490,7 +490,7 @@ export default function Connect() {
                     <div className="post-date">
                       Date:
                       {post.location !== '' && post.link === '' && (
-                        <>Location:</>
+                        <p>Location:</p>
                       )}
                       {post.location === '' && post.link !== '' && <p>Link:</p>}
                       {post.location !== '' && post.link !== '' && (
@@ -509,8 +509,15 @@ export default function Connect() {
                         {'  '}
                         {post.time}
                       </div>
-                      <div>{post.location !== '' && post.location}</div>
                       <div>
+                        {post.location !== '' && post.location}
+                        {post.location === '' && post.link !== '' && (
+                          <a href={post.link} className="post-link">
+                            {post.link}{' '}
+                          </a>
+                        )}
+                      </div>
+                      <div className="post-link">
                         {post.location !== '' && post.link !== '' && (
                           <a href={post.link}>{post.link}</a>
                         )}
@@ -648,6 +655,7 @@ export default function Connect() {
                   className={emptyLocation ? 'invalid' : ''}
                   onChange={(e) => {
                     setEmptyLocation(false);
+                    setEmptyLink(false);
                     setEventLocation(e.target.value);
                   }}
                 />
@@ -666,6 +674,7 @@ export default function Connect() {
                   className={emptyLink ? 'invalid' : ''}
                   onChange={(e) => {
                     setEmptyLink(false);
+                    setEmptyLocation(false);
                     setEventLink(e.target.value);
                   }}
                 ></input>
@@ -773,7 +782,9 @@ export default function Connect() {
                 <div className="post-info">
                   <div className="post-date">
                     Date:
-                    {post.location !== '' && post.link === '' && <>Location:</>}
+                    {post.location !== '' && post.link === '' && (
+                      <p>Location:</p>
+                    )}
                     {post.location === '' && post.link !== '' && <p>Link:</p>}
                     {post.location !== '' && post.link !== '' && (
                       <p>Location:</p>
@@ -791,10 +802,19 @@ export default function Connect() {
                       {'  '}
                       {post.time}
                     </div>
-                    <div>{post.location !== '' && post.location}</div>
-                    <div>
+                    <div className>
+                      {post.location !== '' && post.location}
+                      {post.location === '' && post.link !== '' && (
+                        <a href={post.link} target="_blank">
+                          {post.link}{' '}
+                        </a>
+                      )}
+                    </div>
+                    <div className="post-link">
                       {post.location !== '' && post.link !== '' && (
-                        <a href={post.link}>{post.link}</a>
+                        <a href={post.link} target="_blank">
+                          {post.link}
+                        </a>
                       )}
                     </div>
                   </div>

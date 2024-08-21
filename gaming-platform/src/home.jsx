@@ -431,7 +431,11 @@ export default function Home() {
           </Link>
 
           <Link to="/connect">
-            <button>
+            <button
+              onClick={() => {
+                localStorage.removeItem('searchTitle');
+              }}
+            >
               <FontAwesomeIcon icon={faPeopleGroup} />
               Connect
             </button>
