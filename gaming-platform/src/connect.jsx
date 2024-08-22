@@ -57,7 +57,7 @@ export default function Connect() {
   const [upcomingEvents, setUpcomingEvents] = useState([]);
   const [emptyTitle, setEmptyTitle] = useState(false);
   const [emptyLink, setEmptyLink] = useState(false);
-
+  const [hoveredPosts, setHoveredPosts] = useState([]);
   const [emptyDescription, setEmptyDescription] = useState(false);
   const [emptyLocation, setEmptyLocation] = useState(false);
   const [emptyDate, setEmptyDate] = useState(false);
@@ -462,7 +462,9 @@ export default function Connect() {
             return (
               new Date(post.date) >= new Date() && (
                 <div
-                  className="events"
+                  className={
+                    hoveredPosts.includes(post.id) ? 'events-hovers' : 'events'
+                  }
                   onClick={() => {
                     setExportUsername(post.author.name);
                     setExportPhotoURl(post.author.photo);
@@ -760,6 +762,12 @@ export default function Connect() {
                         }
                       );
                       setEventList(filteredEvents);
+                      const postIds = filteredEvents.map((post) => post.id);
+                      setHoveredPosts(postIds);
+
+                      setTimeout(() => {
+                        setHoveredPosts([]);
+                      }, 1000);
                     }}
                     className="postTitle"
                   >

@@ -574,7 +574,8 @@ form #description-area {
   border-radius: 5px;
   padding: 8px;
 }
-.close {
+.close,
+.close3 {
   position: absolute;
   top: 4%;
   right: 2%;
@@ -586,8 +587,13 @@ form #description-area {
   border: none;
   cursor: pointer;
 }
+.close3 {
+  color: red;
+  font-weight: bold;
+  font-size: 1.6rem;
+}
 .close:hover {
-  box-shadow: 0 0 0px 1.6px rgb(213, 94, 92);
+  /* box-shadow: 0 0 0px 1.6px rgb(213, 94, 92); */
   color: rgb(213, 94, 92);
 
   outline: none;
@@ -607,7 +613,8 @@ dialog::backdrop {
 
   flex: 1;
 }
-.posts {
+.posts,
+.post-hovers {
   color: whitesmoke;
   text-align: justify;
   width: 70ch;
@@ -639,7 +646,8 @@ dialog::backdrop {
 .posts:last-child() {
   margin-bottom: 50px;
 }
-.events {
+.events,
+.events-hovers {
   color: whitesmoke;
   text-align: justify;
   width: 70ch;
@@ -673,6 +681,7 @@ dialog::backdrop {
   background-color: rgba(255, 255, 255, 0.1);
 }
 .posts h1,
+.post-hovers h2,
 .posts h2,
 .events h1,
 .events h2 {
@@ -1338,12 +1347,13 @@ ul {
   justify-content: space-between;
   display: flex;
 }
-.favouriteItems:hover {
-  color: grey;
-  cursor: pointer;
-}
+
 .favouriteItems > .spans {
   width: 80%;
+}
+.favouriteItems > .spans span:hover {
+  color: grey;
+  cursor: pointer;
 }
 .favouriteItems > .spans::before {
   content: '-';
@@ -1474,4 +1484,66 @@ ul {
 .post-link {
   max-width: 30ch;
   overflow: auto;
+}
+.post-hovers,
+.events-hovers {
+  animation: fadeOut 1.5s forwards;
+}
+@keyframes fadeOut {
+  from {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+  to {
+    background-color: transparent;
+  }
+}
+.deleteDialog {
+  /* background-color: rgb(8, 6, 70); */
+  background-color: white;
+
+  font-size: 1.2rem;
+
+  color: rgb(11, 11, 102);
+  border: none;
+  padding: 2%;
+  width: 40%;
+  border-radius: 10px;
+  text-align: justify;
+  position: relative;
+}
+.deleteDialog-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.yesbtn {
+  background-color: rgb(11, 58, 11);
+  color: whitesmoke;
+  border: 1.5px solid rgb(8, 83, 8);
+  border-radius: 10px;
+  padding: 2%;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 1.5rem;
+}
+.yesbtn:hover {
+  background-color: rgb(2, 42, 2);
+  color: rgb(201, 194, 194);
+
+  border: 1.5px solid rgb(2, 42, 2);
+}
+.nobtn:hover {
+  background-color: rgb(63, 11, 11);
+  border: 1.5px solid rgb(63, 11, 11);
+  color: rgb(201, 194, 194);
+}
+.nobtn {
+  background-color: rgb(100, 14, 14);
+  color: whitesmoke;
+  border: 1.5px solid rgb(120, 16, 16);
+  border-radius: 10px;
+  padding: 2%;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 1.5rem;
 }

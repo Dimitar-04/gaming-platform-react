@@ -19,7 +19,7 @@ import {
   arrayRemove,
 } from 'firebase/firestore';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useAsyncError, useNavigate } from 'react-router-dom';
 import {
   faHouse,
   faCirclePlus,
@@ -52,6 +52,10 @@ export default function Home() {
   const [emptyDescription, setEmptyDescription] = useState(false);
   const { currentUser, logout } = useAuth();
   const [refreshingHome, setRefreshingHome] = useState(false);
+  const deleteDialogRef = useRef(null);
+  const [isDeletePost, setIsDeletePost] = useState(false);
+  const [deletePostId, setDeletePostId] = useState(null);
+  const [deletePostIndex, setDeletePostIndex] = useState(null);
   const [mediaURl, setMediaURL] = useState(null);
   const [mediatype, setMediaType] = useState(null);
   const [activePostIds, setActivePostIds] = useState({});
@@ -69,6 +73,7 @@ export default function Home() {
   const [newFavouriteGame, setNewFavouriteGame] = useState('');
   const [editIndex, setEditIndex] = useState(null);
   const [editValue, setEditValue] = useState('');
+  const [hoveredPosts, setHoveredPosts] = useState([]);
   const feedRef = useRef(null);
   const { setExportName, setExportPhotoURl } = useContext(UserContext);
   const nav = useNavigate();
@@ -487,7 +492,9 @@ export default function Home() {
               <>
                 <div
                   key={post.id}
-                  className="posts"
+                  className={
+                    hoveredPosts.includes(post.id) ? 'post-hovers' : 'posts'
+                  }
                   onClick={() => {
                     setExportUsername(post.author.name);
                     setExportPhotoURl(post.author.photo);
@@ -511,7 +518,9 @@ export default function Home() {
                         className="trash"
                         onClick={(e) => {
                           e.stopPropagation();
-                          deletePost(post.id);
+                          setDeletePostId(post.id);
+                          setIsDeletePost(true);
+                          deleteDialogRef.current.showModal();
                         }}
                         title="Delete post"
                       >
@@ -574,7 +583,7 @@ export default function Home() {
                         onClick={() => postComment(post.id)}
                         className="post-comment-btn"
                       >
-                        Submit
+                        Post
                       </button>
                     </div>
                     <div className="comments-list">
@@ -718,6 +727,12 @@ export default function Home() {
                         );
                         setPostsList(filteredPosts);
                         setShowNoPosts(false);
+                        const postIds = filteredPosts.map((post) => post.id);
+                        setHoveredPosts(postIds);
+
+                        setTimeout(() => {
+                          setHoveredPosts([]);
+                        }, 1000);
                       }}
                     >
                       {favourite}
@@ -863,6 +878,49 @@ export default function Home() {
         </button>
         <div className="dialog-content">
           <img src={mediaURl} alt="postImage" />
+        </div>
+      </dialog>
+      <dialog ref={deleteDialogRef} className="deleteDialog">
+        <div className="deleteDialog-content">
+          {isDeletePost && <h2>Are you sure you want to delete this post?</h2>}
+
+          <button
+            className="close3"
+            onClick={() => {
+              deleteDialogRef.current.close();
+              setIsDeletePost(false);
+            }}
+          >
+            X
+          </button>
+
+          <div
+            style={{
+              width: '100%',
+              display: 'flex',
+              justifyContent: 'center',
+              gap: '10%',
+            }}
+          >
+            <button
+              className="yesbtn"
+              onClick={() => {
+                deletePost(deletePostId);
+                setIsDeletePost(false);
+                deleteDialogRef.current.close();
+              }}
+            >
+              Yes
+            </button>
+            <button
+              className="nobtn"
+              onClick={() => {
+                deleteDialogRef.current.close();
+              }}
+            >
+              No
+            </button>
+          </div>
         </div>
       </dialog>
     </div>
