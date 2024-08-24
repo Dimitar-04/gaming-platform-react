@@ -30,6 +30,7 @@ import {
   faX,
 } from '@fortawesome/free-solid-svg-icons';
 import { UserContext } from './contexts/UserContext';
+import { auth } from './firebase';
 
 export default function Connect() {
   const { currentUser, logout } = useAuth();
@@ -205,6 +206,7 @@ export default function Connect() {
   useEffect(() => {
     if (currentUser) {
       updateEvents(username, currentUser.photoURL || photoURL);
+      updateUpcomingEvents();
     }
   }, [username, currentUser.photoURL]);
 
@@ -244,6 +246,33 @@ export default function Connect() {
       });
     });
     await batch.commit();
+    setRefresh(!refresh);
+  }
+  async function updateUpcomingEvents() {
+    const userRef = doc(db, 'users', currentUser.uid);
+    const userSnap = await getDoc(userRef);
+    const userUpcomingEvents = userSnap.data().upcomingEvents;
+
+    const updatedEvents = await Promise.all(
+      userUpcomingEvents.map(async (event) => {
+        const creatorRef = doc(db, 'users', event.author.id);
+        const creatorSnap = await getDoc(creatorRef);
+
+        const creatorData = creatorSnap.data();
+
+        return {
+          ...event,
+          author: {
+            id: event.author.id,
+            name: creatorData.username,
+            photo: creatorData.photoURL,
+          },
+        };
+      })
+    );
+    // console.log(userUpcomingEvents);
+    // console.log(updatedEvents);
+    await updateDoc(userRef, { upcomingEvents: updatedEvents });
     setRefresh(!refresh);
   }
   async function deletePost(id) {
@@ -620,6 +649,7 @@ export default function Connect() {
               type="text"
               placeholder="Name of event"
               className={emptyTitle ? 'invalid' : ''}
+              disabled={loading}
               value={eventTitle}
               onChange={(e) => {
                 setEmptyTitle(false);
@@ -633,6 +663,7 @@ export default function Connect() {
           <div className="inputFieldDescription">
             <textarea
               value={eventDescription}
+              disabled={loading}
               placeholder="Describe your event..."
               className={
                 emptyDescription ? 'invalidDescription' : 'eventDescription'
@@ -650,7 +681,8 @@ export default function Connect() {
             <div className="date-create">
               <div className="inputFieldLocation">
                 <input
-                  type="location"
+                  type="text"
+                  disabled={loading}
                   value={eventLocation}
                   placeholder="Location"
                   id="location"
@@ -672,6 +704,7 @@ export default function Connect() {
                   type="url"
                   placeholder="Link"
                   id="link"
+                  disabled={loading}
                   value={eventLink}
                   className={emptyLink ? 'invalid' : ''}
                   onChange={(e) => {
@@ -691,6 +724,7 @@ export default function Connect() {
               <div className="inputFieldDate">
                 <input
                   type="date"
+                  disabled={loading}
                   value={eventDate}
                   className={emptyDate ? 'invalidDate' : 'eventDate'}
                   onChange={(e) => {
@@ -710,6 +744,7 @@ export default function Connect() {
                   type="time"
                   defaultValue="17:00"
                   className="time"
+                  disabled={loading}
                   onChange={(e) => {
                     setEventTime(e.target.value);
                   }}
@@ -718,14 +753,18 @@ export default function Connect() {
             </div>
           </div>
           <div>
-            <button className="login-btn" onClick={createPost}>
+            <button
+              className="login-btn"
+              onClick={createPost}
+              disabled={loading}
+            >
               Create Event
             </button>
           </div>
         </div>
       </dialog>
       <div className="favourites">
-        <div className="user_now">
+        <div className="user_now2">
           <h1>Your upcoming events:</h1>
         </div>
         <div className="upcomingEvents">

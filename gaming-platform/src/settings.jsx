@@ -184,7 +184,14 @@ export default function Settings() {
         <div className="profile">
           <h1>Profile</h1>
           <div className="profile-info">
-            <img className="user-image-large" src={photoURL} alt="priflePic" />
+            <div className="user-img-large-div">
+              <img
+                className="user-image-large"
+                src={photoURL}
+                alt="priflePic"
+              />
+            </div>
+
             <div className="profilepicture-div">
               <input
                 type="file"

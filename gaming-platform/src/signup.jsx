@@ -132,7 +132,7 @@ function Signup() {
           <div className="signup-info">
             <div className="name-email-password">
               <div className="input-container">
-                <label htmlFor="name">FULL NAME</label>
+                <label htmlFor="name"> NAME</label>
                 <input
                   type="text"
                   id="name"

@@ -619,8 +619,10 @@ export default function UserProfile() {
                               {'  '}
                               {post.time}
                             </div>
-                            <div>{post.location !== '' && post.location}</div>
-                            <div>
+                            <div className="post-link">
+                              {post.location !== '' && post.location}
+                            </div>
+                            <div className="post-link">
                               {post.location !== '' && post.link !== '' && (
                                 <a href={post.link}>{post.link}</a>
                               )}

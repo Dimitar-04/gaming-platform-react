@@ -129,9 +129,11 @@ export default function Home() {
             setUsername(userSnap.data().username);
           }
           if (userSnap.data().name === '') {
-            console.log(currentUser);
             const newName = currentUser.displayName;
             await updateDoc(userRef, { name: newName });
+          }
+          if (!userSnap.data().photoURL) {
+            await updateDoc(userRef, { photoURL: currentUser.photoURL });
           }
         } else {
           console.log('error');
@@ -643,7 +645,10 @@ export default function Home() {
       </div>
       <div className="favourites">
         <div className="user_now">
-          <img className="user-image" src={profilePic} alt="priflePic" />
+          <div className="user-image-div">
+            <img className="user-image" src={profilePic} alt="priflePic" />
+          </div>
+
           <p className="username-info">{username}</p>
           <button
             style={{

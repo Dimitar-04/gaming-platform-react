@@ -457,8 +457,6 @@ label ~ label {
 .username-info {
   color: white;
   font-size: 1.55rem;
-
-  margin-left: 2%;
 }
 
 .profile {
@@ -513,22 +511,36 @@ button:disabled {
   margin-top: 5%;
   border-bottom: 1px solid whitesmoke;
   margin-bottom: 5%;
+  padding-bottom: 2.5%;
 }
-.user_now h1 {
+.user_now2 {
+  display: flex;
+  align-items: center;
+  margin-top: 5%;
+  border-bottom: 1px solid whitesmoke;
+  margin-bottom: 5%;
+}
+.user_now2 h1 {
   color: whitesmoke;
   margin-left: 4%;
 }
 .user-image {
-  width: 10%;
-
-  height: 10%;
+  height: 60%;
+  width: 60%;
   border-radius: 50%;
+  margin-left: 15%;
+  margin-right: 10%;
+}
+.user-image-div {
+  border-radius: 50%;
+  display: flex;
+  justify-content: flex-end;
 
-  margin-left: 10%;
+  width: 20%;
 }
 .user-image-large {
-  width: 18%;
-  height: 18%;
+  width: 100%;
+  height: 100%;
   border-radius: 50%;
 }
 .user-image-small {
@@ -1265,11 +1277,11 @@ dialog::backdrop {
 .customLink2 {
   text-decoration: none;
   color: white;
-  margin-bottom: 2%;
 }
 
 .customLink:hover,
-.customLink2 h3:hover {
+.customLink2 h3:hover,
+.customLink3:hover {
   color: grey;
 }
 .searchBtn {
@@ -1546,4 +1558,13 @@ ul {
   font-weight: bold;
   cursor: pointer;
   font-size: 1.5rem;
+}
+.user-img-large-div {
+  width: 20%;
+  height: 25%;
+  display: flex;
+  border-radius: 50%;
+}
+.profile-info {
+  height: 100%;
 }
