@@ -345,15 +345,59 @@ label ~ label {
   display: flex;
   flex-direction: column;
   border-right: 0.7px solid white;
+  min-width: 150px;
 }
 .menu {
-  width: 70%;
-
+  width: 80%;
+  color: whitesmoke;
   margin-top: 40%;
-  margin-left: 15%;
+  margin-left: 13%;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 20px;
+  height: 36%;
+}
+.menu-home-btn {
+  display: flex;
+  color: whitesmoke;
+  background-color: rgb(9, 9, 39);
+  align-items: center;
+
+  height: 100%;
+  border-radius: 5px;
+  cursor: pointer;
+  border: none;
+  width: 100%;
+}
+.menu-home-link {
+  width: 100%;
+  height: 17%;
+}
+
+.menu-text {
+  /* width: 70%; */
+}
+
+/* .menu-home-links button {
+  width: 100%;
+  background-color: rgb(9, 9, 39);
+  display: flex;
+  align-items: center;
+  border-radius: 5px;
+  height: 150%;
+  cursor: pointer;
+  padding: 3%;
+  font-size: 1.3rem;
+  color: whitesmoke;
+
+  border: none;
+} */
+.menu-home p {
+  margin-left: 5%;
+}
+.menu-home-links {
+  height: 90%;
+  width: 100%;
 }
 .user {
   font-size: 1.3rem;
@@ -363,18 +407,16 @@ label ~ label {
 .user p {
   color: white;
 }
-.menu button {
+/* .menu button {
   display: flex;
   width: 95%;
-  gap: 10px;
-  padding: 18px;
-  font-size: 1.4rem;
+
+  font-size: 1.3rem;
   color: white;
   background-color: rgb(9, 9, 39);
   cursor: pointer;
   border: none;
-  border-radius: 5px;
-}
+} */
 .menu a {
   text-decoration: none;
   cursor: pointer;
@@ -405,7 +447,7 @@ label ~ label {
   overflow: auto;
   scrollbar-width: none;
 }
-.menu button:hover {
+.menu-home-btn:hover {
   background-color: lightgrey;
   color: hwb(240 5% 79%);
 }
@@ -433,8 +475,13 @@ label ~ label {
 }
 
 .light-logo {
-  width: 28%;
-  max-width: 53px;
+  height: 8%;
+
+  margin-left: 1%;
+  margin-top: 3%;
+  cursor: pointer;
+}
+.light-logo2 {
   height: 8%;
   margin-left: 1%;
   margin-top: 3%;
@@ -530,6 +577,92 @@ button:disabled {
   border-radius: 50%;
   margin-left: 15%;
   margin-right: 10%;
+}
+.user-image2 {
+  width: 60%;
+  border-radius: 50%;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+@media (max-width: 1920px) {
+  .user-image2 {
+    width: 60%;
+    height: auto;
+  }
+  .posts,
+  .post-hovers {
+    width: 94ch;
+  }
+  .posts2 {
+    width: 90ch;
+  }
+  .events {
+    width: 90ch;
+  }
+  .events2 {
+    width: 60ch;
+  }
+  .createPost {
+    font-size: 3.5rem;
+  }
+  .light-logo {
+    width: 32%;
+    min-width: 80px;
+    max-width: 90px;
+  }
+  .menu-icon {
+    width: 30%;
+    display: flex;
+    justify-content: center;
+  }
+  .light-logo2 {
+    width: 25%;
+    min-width: 80px;
+  }
+  .menu-home-btn {
+    font-size: 1.6rem;
+  }
+}
+
+@media (max-width: 1366px) {
+  .user-image2 {
+    width: 60%;
+  }
+  .menu {
+    margin-top: 60%;
+  }
+  .posts,
+  .post-hovers {
+    width: 70ch;
+  }
+  .posts2 {
+    width: 70ch;
+  }
+  .events2 {
+    width: 45ch;
+  }
+  .events {
+    width: 70ch;
+  }
+  .createPost {
+    font-size: 2.7rem;
+  }
+  .light-logo {
+    width: 35%;
+    height: 9%;
+    max-width: 80px;
+    min-width: 55px;
+  }
+  .light-logo2 {
+    width: 25%;
+  }
+  .menu-home-btn {
+    font-size: 1.5rem;
+  }
+  .menu-icon {
+    margin-right: 5%;
+  }
 }
 .user-image-div {
   border-radius: 50%;
@@ -629,7 +762,7 @@ dialog::backdrop {
 .post-hovers {
   color: whitesmoke;
   text-align: justify;
-  width: 70ch;
+
   margin-top: 1%;
   min-height: 200px;
   max-height: 380px;
@@ -643,7 +776,7 @@ dialog::backdrop {
 .posts2 {
   color: whitesmoke;
   text-align: justify;
-  width: 70ch;
+
   margin-top: 6%;
   min-height: 200px;
   max-height: 380px;
@@ -662,7 +795,7 @@ dialog::backdrop {
 .events-hovers {
   color: whitesmoke;
   text-align: justify;
-  width: 70ch;
+
   margin-top: 4%;
   max-height: 400px;
   margin-bottom: 4%;
@@ -675,7 +808,7 @@ dialog::backdrop {
 .events2 {
   color: whitesmoke;
   text-align: justify;
-  width: 45ch;
+
   margin-top: 4%;
   max-height: 400px;
   margin-bottom: 4%;
@@ -1013,7 +1146,7 @@ dialog::backdrop {
   right: 30%;
   display: flex;
   background: none;
-  font-size: 2.7rem;
+
   color: white;
 
   cursor: pointer;

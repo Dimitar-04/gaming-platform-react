@@ -54,6 +54,7 @@ export default function Home() {
   const [refreshingHome, setRefreshingHome] = useState(false);
   const deleteDialogRef = useRef(null);
   const [isDeletePost, setIsDeletePost] = useState(false);
+  const [isLogOut, setIsLogOut] = useState(false);
   const [deletePostId, setDeletePostId] = useState(null);
   const [deletePostIndex, setDeletePostIndex] = useState(null);
   const [mediaURl, setMediaURL] = useState(null);
@@ -422,8 +423,9 @@ export default function Home() {
         <img src={logo} alt="" className="light-logo" onClick={scrollToTop} />
 
         <div className="menu">
-          <Link to="/home">
+          <Link to="/home" className="menu-home-link">
             <button
+              className="menu-home-btn"
               onClick={() => {
                 setRefreshingHome(true);
                 setPostsList([...originalPostsList]);
@@ -432,31 +434,48 @@ export default function Home() {
                 localStorage.removeItem('searchTitle');
               }}
             >
-              <FontAwesomeIcon icon={faHouse} />
-              Home
+              <div className="menu-icon">
+                <FontAwesomeIcon icon={faHouse} />
+              </div>
+              <div className="menu-text">
+                <span>Home</span>
+              </div>
             </button>
           </Link>
-
-          <Link to="/connect">
+          <Link to="/connect" className="menu-home-link">
             <button
+              className="menu-home-btn"
               onClick={() => {
                 localStorage.removeItem('searchTitle');
               }}
             >
-              <FontAwesomeIcon icon={faPeopleGroup} />
-              Connect
+              <div className="menu-icon">
+                <FontAwesomeIcon icon={faPeopleGroup} />
+              </div>
+              <div className="menu-text">
+                <span>Connect</span>
+              </div>
             </button>
           </Link>
-          <Link to="/settings">
-            <button>
-              <FontAwesomeIcon icon={faGear} />
-              Settings
+          <Link to="/settings" className="menu-home-link">
+            <button className="menu-home-btn">
+              <div className="menu-icon">
+                <FontAwesomeIcon icon={faGear} />
+              </div>
+              <div className="menu-text">
+                <span>Settings</span>
+              </div>
             </button>
           </Link>
-          <Link to="/profile">
-            <button>
-              <FontAwesomeIcon icon={faUser} />
-              Profile
+
+          <Link to="/profile" className="menu-home-link">
+            <button className="menu-home-btn">
+              <div className="menu-icon">
+                <img className="user-image2" src={profilePic} />
+              </div>
+              <div className="menu-text">
+                <span>Profile</span>
+              </div>
             </button>
           </Link>
         </div>
@@ -661,7 +680,10 @@ export default function Home() {
               marginRight: '2%',
               cursor: 'pointer',
             }}
-            onClick={handleLogout}
+            onClick={() => {
+              setIsLogOut(true);
+              deleteDialogRef.current.showModal();
+            }}
             title="Log out?"
           >
             Log out
@@ -888,12 +910,13 @@ export default function Home() {
       <dialog ref={deleteDialogRef} className="deleteDialog">
         <div className="deleteDialog-content">
           {isDeletePost && <h2>Are you sure you want to delete this post?</h2>}
-
+          {isLogOut && <h2>Log out?</h2>}
           <button
             className="close3"
             onClick={() => {
               deleteDialogRef.current.close();
               setIsDeletePost(false);
+              setIsLogOut(false);
             }}
           >
             X
@@ -910,8 +933,14 @@ export default function Home() {
             <button
               className="yesbtn"
               onClick={() => {
-                deletePost(deletePostId);
-                setIsDeletePost(false);
+                if (isDeletePost) {
+                  deletePost(deletePostId);
+                  setIsDeletePost(false);
+                } else if (isLogOut) {
+                  handleLogout();
+                  setIsLogOut(false);
+                }
+
                 deleteDialogRef.current.close();
               }}
             >
@@ -920,6 +949,8 @@ export default function Home() {
             <button
               className="nobtn"
               onClick={() => {
+                setIsDeletePost(false);
+                setIsLogOut(false);
                 deleteDialogRef.current.close();
               }}
             >

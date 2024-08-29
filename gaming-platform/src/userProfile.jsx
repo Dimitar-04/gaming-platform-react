@@ -411,29 +411,45 @@ export default function UserProfile() {
         <img src={logo} alt="" className="light-logo" onClick={scrollToTop} />
 
         <div className="menu">
-          <Link to="/home">
-            <button>
-              <FontAwesomeIcon icon={faHouse} />
-              Home
+          <Link to="/home" className="menu-home-link">
+            <button className="menu-home-btn">
+              <div className="menu-icon">
+                <FontAwesomeIcon icon={faHouse} />
+              </div>
+              <div className="menu-text">
+                <span>Home</span>
+              </div>
+            </button>
+          </Link>
+          <Link to="/connect" className="menu-home-link">
+            <button className="menu-home-btn">
+              <div className="menu-icon">
+                <FontAwesomeIcon icon={faPeopleGroup} />
+              </div>
+              <div className="menu-text">
+                <span>Connect</span>
+              </div>
+            </button>
+          </Link>
+          <Link to="/settings" className="menu-home-link">
+            <button className="menu-home-btn">
+              <div className="menu-icon">
+                <FontAwesomeIcon icon={faGear} />
+              </div>
+              <div className="menu-text">
+                <span>Settings</span>
+              </div>
             </button>
           </Link>
 
-          <Link to="/connect">
-            <button>
-              <FontAwesomeIcon icon={faPeopleGroup} />
-              Connect
-            </button>
-          </Link>
-          <Link to="/settings">
-            <button>
-              <FontAwesomeIcon icon={faGear} />
-              Settings
-            </button>
-          </Link>
-          <Link to="/profile">
-            <button>
-              <FontAwesomeIcon icon={faUser} />
-              Profile
+          <Link to="/profile" className="menu-home-link">
+            <button className="menu-home-btn">
+              <div className="menu-icon">
+                <img className="user-image2" src={currentPhotoURL} />
+              </div>
+              <div className="menu-text">
+                <span>Profile</span>
+              </div>
             </button>
           </Link>
         </div>

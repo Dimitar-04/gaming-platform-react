@@ -419,40 +419,59 @@ export default function Connect() {
         <img src={logo} alt="" className="light-logo" onClick={scrollToTop} />
 
         <div className="menu">
-          <Link to="/home">
+          <Link to="/home" className="menu-home-link">
             <button
+              className="menu-home-btn"
+              onClick={() => {
+                setRefreshingHome(true);
+                setPostsList([...originalPostsList]);
+                setShowNoPosts(false);
+                setSearchTitle('');
+                localStorage.removeItem('searchTitle');
+              }}
+            >
+              <div className="menu-icon">
+                <FontAwesomeIcon icon={faHouse} />
+              </div>
+              <div className="menu-text">
+                <span>Home</span>
+              </div>
+            </button>
+          </Link>
+          <Link to="/connect" className="menu-home-link">
+            <button
+              className="menu-home-btn"
               onClick={() => {
                 localStorage.removeItem('searchTitle');
               }}
             >
-              <FontAwesomeIcon icon={faHouse} />
-              Home
+              <div className="menu-icon">
+                <FontAwesomeIcon icon={faPeopleGroup} />
+              </div>
+              <div className="menu-text">
+                <span>Connect</span>
+              </div>
+            </button>
+          </Link>
+          <Link to="/settings" className="menu-home-link">
+            <button className="menu-home-btn">
+              <div className="menu-icon">
+                <FontAwesomeIcon icon={faGear} />
+              </div>
+              <div className="menu-text">
+                <span>Settings</span>
+              </div>
             </button>
           </Link>
 
-          <Link to="/connect">
-            <button
-              onClick={() => {
-                setEventList(originalEventList);
-                setShowNoPosts(false);
-                setSearch('');
-                localStorage.removeItem('searchTitle');
-              }}
-            >
-              <FontAwesomeIcon icon={faPeopleGroup} />
-              Connect
-            </button>
-          </Link>
-          <Link to="/settings">
-            <button>
-              <FontAwesomeIcon icon={faGear} />
-              Settings
-            </button>
-          </Link>
-          <Link to="/profile">
-            <button>
-              <FontAwesomeIcon icon={faUser} />
-              Profile
+          <Link to="/profile" className="menu-home-link">
+            <button className="menu-home-btn">
+              <div className="menu-icon">
+                <img className="user-image2" src={photoURL} />
+              </div>
+              <div className="menu-text">
+                <span>Profile</span>
+              </div>
             </button>
           </Link>
         </div>

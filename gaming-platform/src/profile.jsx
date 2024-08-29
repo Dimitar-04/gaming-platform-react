@@ -412,34 +412,64 @@ export default function Profile() {
   return (
     <div className="main-container-home2">
       <div className="sidebar">
-        <img src={logo} alt="" className="light-logo" onClick={scrollToTop} />
+        <img src={logo} alt="" className="light-logo2" onClick={scrollToTop} />
 
         <div className="menu">
-          <Link to="/home">
-            <button>
-              <FontAwesomeIcon icon={faHouse} />
-              Home
+          <Link to="/home" className="menu-home-link">
+            <button
+              className="menu-home-btn"
+              onClick={() => {
+                setRefreshingHome(true);
+                setPostsList([...originalPostsList]);
+                setShowNoPosts(false);
+                setSearchTitle('');
+                localStorage.removeItem('searchTitle');
+              }}
+            >
+              <div className="menu-icon">
+                <FontAwesomeIcon icon={faHouse} />
+              </div>
+              <div className="menu-text">
+                <span>Home</span>
+              </div>
+            </button>
+          </Link>
+          <Link to="/connect" className="menu-home-link">
+            <button
+              className="menu-home-btn"
+              onClick={() => {
+                localStorage.removeItem('searchTitle');
+              }}
+            >
+              <div className="menu-icon">
+                <FontAwesomeIcon icon={faPeopleGroup} />
+              </div>
+              <div className="menu-text">
+                <span>Connect</span>
+              </div>
+            </button>
+          </Link>
+          <Link to="/settings" className="menu-home-link">
+            <button className="menu-home-btn">
+              <div className="menu-icon">
+                <FontAwesomeIcon icon={faGear} />
+              </div>
+              <div className="menu-text">
+                <span>Settings</span>
+              </div>
             </button>
           </Link>
 
-          <Link to="/connect">
-            <button>
-              <FontAwesomeIcon icon={faPeopleGroup} />
-              Connect
+          <Link to="/profile" className="menu-home-link">
+            <button className="menu-home-btn">
+              <div className="menu-icon">
+                <img className="user-image2" src={photoURL} />
+              </div>
+              <div className="menu-text">
+                <span>Profile</span>
+              </div>
             </button>
           </Link>
-          <Link to="/settings">
-            <button>
-              <FontAwesomeIcon icon={faGear} />
-              Settings
-            </button>
-          </Link>
-          <a href="">
-            <button>
-              <FontAwesomeIcon icon={faUser} />
-              Profile
-            </button>
-          </a>
         </div>
       </div>
       <div className="home-main">
@@ -507,7 +537,14 @@ export default function Profile() {
                             toggleCommentSection(post.id);
                           }}
                         >
-                          <span>Comments</span>
+                          <span>
+                            {post.comments.length}{' '}
+                            {post.comments.length === 1 ? (
+                              <span>Comment</span>
+                            ) : (
+                              <span>Comments</span>
+                            )}{' '}
+                          </span>
                           <FontAwesomeIcon icon={faComment} />
                         </button>
                       </div>
@@ -589,7 +626,7 @@ export default function Profile() {
                           <div className="post-date">
                             Date:
                             {post.location !== '' && post.link === '' && (
-                              <>Location:</>
+                              <p>Location:</p>
                             )}
                             {post.location === '' && post.link !== '' && (
                               <p>Link:</p>
@@ -614,8 +651,17 @@ export default function Profile() {
                               {'  '}
                               {post.time}
                             </div>
-                            <div className="post-link">
+                            <div>
                               {post.location !== '' && post.location}
+                              {post.location === '' && post.link !== '' && (
+                                <a
+                                  href={post.link}
+                                  className="post-link"
+                                  target="blank"
+                                >
+                                  {post.link}{' '}
+                                </a>
+                              )}
                             </div>
                             <div className="post-link">
                               {post.location !== '' && post.link !== '' && (
