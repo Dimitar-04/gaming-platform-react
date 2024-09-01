@@ -44,6 +44,7 @@ export default function Home() {
   const [profilePic, setProfilePic] = useState(
     'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRFCzxivJXCZk0Kk8HsHujTO3Olx0ngytPrWw&s'
   );
+  const { activeButton, setActiveButton } = useContext(UserContext);
   const dialogRef = useRef(null);
   const imageDialogRef = useRef(null);
   const [gameTitle, setGameTitle] = useState('');
@@ -61,6 +62,9 @@ export default function Home() {
   const [mediatype, setMediaType] = useState(null);
   const [activePostIds, setActivePostIds] = useState({});
   const [postsList, setPostsList] = useState([]);
+  const [backgroundPhoto, setBackgroundPhoto] = useState(
+    'https://preview.free3d.com/img/2017/02/2162604908178572794/1uou9r2k.jpg'
+  );
   const [refresh, setRefresh] = useState(false);
   const [filename, setFilename] = useState('');
   const [comments, setComments] = useState({});
@@ -77,6 +81,7 @@ export default function Home() {
   const [hoveredPosts, setHoveredPosts] = useState([]);
   const feedRef = useRef(null);
   const { setExportName, setExportPhotoURl } = useContext(UserContext);
+
   const nav = useNavigate();
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -88,6 +93,7 @@ export default function Home() {
   }, [postsList]);
 
   useEffect(() => {
+    localStorage.removeItem('searchTitle');
     const fetchUserProfile = async () => {
       if (!currentUser) {
         console.log('No user logged in');
@@ -98,29 +104,33 @@ export default function Home() {
       if (currentUser && currentUser.uid) {
         const userRef = doc(db, 'users', currentUser.uid);
         const userSnap = await getDoc(userRef);
-        if (
-          currentUser.photoURL
-          // currentUser.photoURL.includes('googleusercontent.com')
-        ) {
-          const img = new Image();
-          img.src = currentUser.photoURL;
+        // if (
+        //   currentUser.photoURL
+        //   // currentUser.photoURL.includes('googleusercontent.com')
+        // ) {
+        //   const img = new Image();
+        //   img.src = currentUser.photoURL;
 
-          console.log(img.src);
-          setProfilePic(img.src);
-          // img.onload = () => {
-          //   console.log(img.src);
-          //   setProfilePic(img.src);
-          // };
-          // img.onerror = () => {
-          //   console.log('image not loaded');
-          // };
-        }
+        //   console.log(img.src);
+
+        //   setProfilePic(img.src);
+        //   // img.onload = () => {
+        //   //   console.log(img.src);
+        //   //   setProfilePic(img.src);
+        //   // };
+        //   // img.onerror = () => {
+        //   //   console.log('image not loaded');
+        //   // };
+        // }
 
         if (userSnap.exists()) {
           const userData = userSnap.data();
 
           if (userData.photoURL) {
             setProfilePic(userData.photoURL);
+          }
+          if (!userData.backgroundPhoto) {
+            await updateDoc(userRef, { backgroundPhoto: backgroundPhoto });
           }
           if (userSnap.data().username === '') {
             const nusername = currentUser.email.split('@')[0];
@@ -133,7 +143,7 @@ export default function Home() {
             const newName = currentUser.displayName;
             await updateDoc(userRef, { name: newName });
           }
-          if (!userSnap.data().photoURL) {
+          if (!userSnap.data().photoURL && currentUser.photoURL) {
             await updateDoc(userRef, { photoURL: currentUser.photoURL });
           }
         } else {
@@ -417,6 +427,17 @@ export default function Home() {
       alert('Failed to log out', error.message);
     }
   }
+  const handleButtonClick = (buttonId, callback) => {
+    if (localStorage.getItem('activeButton')) {
+      console.log(localStorage.getItem('activeButton'));
+      localStorage.removeItem('activeButton');
+      localStorage.setItem('activeButton', buttonId);
+    } else {
+      localStorage.setItem('activeButton', buttonId);
+      console.log(localStorage.getItem('activeButton'));
+    }
+    if (callback) callback();
+  };
   return (
     <div className="main-container-home">
       <div className="sidebar">
@@ -425,19 +446,26 @@ export default function Home() {
         <div className="menu">
           <Link to="/home" className="menu-home-link">
             <button
-              className="menu-home-btn"
-              onClick={() => {
-                setRefreshingHome(true);
-                setPostsList([...originalPostsList]);
-                setShowNoPosts(false);
-                setSearchTitle('');
-                localStorage.removeItem('searchTitle');
-              }}
+              className={`menu-home-btn ${
+                (localStorage.getItem('activeButton') || activeButton) ===
+                'home'
+                  ? 'active'
+                  : ''
+              }`}
+              onClick={() =>
+                handleButtonClick('home', () => {
+                  setRefreshingHome(true);
+                  setPostsList([...originalPostsList]);
+                  setShowNoPosts(false);
+                  setSearchTitle('');
+                  localStorage.removeItem('searchTitle');
+                })
+              }
             >
-              <div className="menu-icon">
+              <div className="menu-icon2">
                 <FontAwesomeIcon icon={faHouse} />
               </div>
-              <div className="menu-text">
+              <div className="menu-text2">
                 <span>Home</span>
               </div>
             </button>
@@ -445,9 +473,11 @@ export default function Home() {
           <Link to="/connect" className="menu-home-link">
             <button
               className="menu-home-btn"
-              onClick={() => {
-                localStorage.removeItem('searchTitle');
-              }}
+              onClick={() =>
+                handleButtonClick('connect', () => {
+                  localStorage.removeItem('searchTitle');
+                })
+              }
             >
               <div className="menu-icon">
                 <FontAwesomeIcon icon={faPeopleGroup} />
@@ -458,7 +488,12 @@ export default function Home() {
             </button>
           </Link>
           <Link to="/settings" className="menu-home-link">
-            <button className="menu-home-btn">
+            <button
+              className="menu-home-btn"
+              onClick={() => {
+                handleButtonClick('settings', null);
+              }}
+            >
               <div className="menu-icon">
                 <FontAwesomeIcon icon={faGear} />
               </div>
@@ -469,7 +504,12 @@ export default function Home() {
           </Link>
 
           <Link to="/profile" className="menu-home-link">
-            <button className="menu-home-btn">
+            <button
+              className="menu-home-btn"
+              onClick={() => {
+                handleButtonClick('profile', null);
+              }}
+            >
               <div className="menu-icon">
                 <img className="user-image2" src={profilePic} />
               </div>
@@ -517,11 +557,18 @@ export default function Home() {
                     hoveredPosts.includes(post.id) ? 'post-hovers' : 'posts'
                   }
                   onClick={() => {
-                    setExportUsername(post.author.name);
-                    setExportPhotoURl(post.author.photo);
+                    if (post.author.id === currentUser.uid) {
+                      nav('/profile');
+                    } else {
+                      setExportUsername(post.author.name);
+                      setExportPhotoURl(post.author.photo);
+                    }
+
                     localStorage.removeItem('name');
                     localStorage.removeItem('username');
+                    handleButtonClick('home', null);
                     localStorage.removeItem('photoURL');
+                    localStorage.removeItem('backgroundPhoto');
                   }}
                 >
                   <div className="author">

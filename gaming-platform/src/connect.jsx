@@ -67,6 +67,7 @@ export default function Connect() {
   const feedRef = useRef(null);
   const [search, setSearch] = useState('');
   const goingDialog = useRef(null);
+  const { activeButton, setActiveButton } = useContext(UserContext);
   const [showNoPosts, setShowNoPosts] = useState(false);
   const { setExportName, setExportPhotoURl, setExportUsername } =
     useContext(UserContext);
@@ -205,8 +206,9 @@ export default function Connect() {
 
   useEffect(() => {
     if (currentUser) {
-      updateEvents(username, currentUser.photoURL || photoURL);
+      updateEvents(username, photoURL || currentUser.photoURL);
       updateUpcomingEvents();
+      updateGoingList();
     }
   }, [username, currentUser.photoURL]);
 
@@ -260,21 +262,60 @@ export default function Connect() {
 
         const creatorData = creatorSnap.data();
 
-        return {
-          ...event,
-          author: {
-            id: event.author.id,
-            name: creatorData.username,
-            photo: creatorData.photoURL,
-          },
-        };
+        if (
+          creatorData.username != event.author.name ||
+          creatorData.photoURL != event.author.photo
+        ) {
+          return {
+            ...event,
+            author: {
+              id: event.author.id,
+              name: creatorData.username,
+              photo: creatorData.photoURL,
+            },
+          };
+        } else {
+          return event;
+        }
       })
     );
-    // console.log(userUpcomingEvents);
-    // console.log(updatedEvents);
+
     await updateDoc(userRef, { upcomingEvents: updatedEvents });
     setRefresh(!refresh);
   }
+
+  async function updateGoingList() {
+    const events = collection(db, 'events');
+    const eventsSnapshot = await getDocs(events);
+    const eventsList = eventsSnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    await Promise.all(
+      eventsList.map(async (event) => {
+        console.log(event);
+        const going = event.going;
+        const eventRef = doc(db, 'events', event.id);
+        const updatedGoing = await Promise.all(
+          going.map(async (user) => {
+            const userRef = doc(db, 'users', user.id);
+            const userSnap = await getDoc(userRef);
+            const userData = userSnap.data();
+            return {
+              id: user.id,
+              name: userData.username,
+              photo: userData.photoURL,
+            };
+          })
+        );
+
+        await updateDoc(eventRef, { going: updatedGoing });
+      })
+    );
+    setRefresh(!refresh);
+  }
+
   async function deletePost(id) {
     const postDoc = doc(db, 'events', id);
     setUpcomingEvents((prevEvents) => {
@@ -413,6 +454,16 @@ export default function Connect() {
       checkUserEvents();
     }
   }, [currentUser, originalEventList]);
+  const handleButtonClick = (buttonId, callback) => {
+    if (localStorage.getItem('activeButton')) {
+      console.log(localStorage.getItem('activeButton'));
+      localStorage.removeItem('activeButton');
+      localStorage.setItem('activeButton', buttonId);
+    } else {
+      localStorage.setItem('activeButton', buttonId);
+    }
+    if (callback) callback();
+  };
   return (
     <div className="main-container-home">
       <div className="sidebar">
@@ -421,29 +472,40 @@ export default function Connect() {
         <div className="menu">
           <Link to="/home" className="menu-home-link">
             <button
-              className="menu-home-btn"
-              onClick={() => {
-                setRefreshingHome(true);
-                setPostsList([...originalPostsList]);
-                setShowNoPosts(false);
-                setSearchTitle('');
-                localStorage.removeItem('searchTitle');
-              }}
+              className={`menu-home-btn ${
+                activeButton === 'home' ? 'active' : ''
+              }`}
+              onClick={() =>
+                handleButtonClick('home', () => {
+                  setRefreshingHome(true);
+                  setPostsList([...originalPostsList]);
+                  setShowNoPosts(false);
+                  setSearchTitle('');
+                  localStorage.removeItem('searchTitle');
+                })
+              }
             >
-              <div className="menu-icon">
+              <div className="menu-icon2">
                 <FontAwesomeIcon icon={faHouse} />
               </div>
-              <div className="menu-text">
+              <div className="menu-text2">
                 <span>Home</span>
               </div>
             </button>
           </Link>
           <Link to="/connect" className="menu-home-link">
             <button
-              className="menu-home-btn"
-              onClick={() => {
-                localStorage.removeItem('searchTitle');
-              }}
+              className={`menu-home-btn ${
+                (localStorage.getItem('activeButton') || activeButton) ===
+                'connect'
+                  ? 'active'
+                  : ''
+              }`}
+              onClick={() =>
+                handleButtonClick('connect', () => {
+                  localStorage.removeItem('searchTitle');
+                })
+              }
             >
               <div className="menu-icon">
                 <FontAwesomeIcon icon={faPeopleGroup} />
@@ -454,7 +516,14 @@ export default function Connect() {
             </button>
           </Link>
           <Link to="/settings" className="menu-home-link">
-            <button className="menu-home-btn">
+            <button
+              className={`menu-home-btn ${
+                activeButton === 'settings' ? 'active' : ''
+              }`}
+              onClick={() => {
+                handleButtonClick('settings', null);
+              }}
+            >
               <div className="menu-icon">
                 <FontAwesomeIcon icon={faGear} />
               </div>
@@ -465,7 +534,14 @@ export default function Connect() {
           </Link>
 
           <Link to="/profile" className="menu-home-link">
-            <button className="menu-home-btn">
+            <button
+              className={`menu-home-btn ${
+                activeButton === 'profile' ? 'active' : ''
+              }`}
+              onClick={() => {
+                handleButtonClick('profile', null);
+              }}
+            >
               <div className="menu-icon">
                 <img className="user-image2" src={photoURL} />
               </div>
@@ -619,7 +695,6 @@ export default function Connect() {
 
                           setGoingList(postSnap.data().going);
                           goingDialog.current.showModal();
-                          console.log(goingList);
                         }}
                       >
                         {post.going.length}

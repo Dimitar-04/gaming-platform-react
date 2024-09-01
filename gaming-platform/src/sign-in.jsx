@@ -48,6 +48,7 @@ function Sign_in() {
     if (dali == 0) {
       try {
         setLoading(true);
+        handleButtonClick('home', null);
         await login(emailRef.current.value, passwordRef.current.value);
         navigate('/home');
       } catch (error) {
@@ -70,14 +71,24 @@ function Sign_in() {
           phone: '',
         });
       }
-
+      handleButtonClick('home', null);
       navigate('/home');
     } catch (error) {
       alert(`Failed to sign in ${error.message}`);
     }
     setLoading(false);
   }
-
+  const handleButtonClick = (buttonId, callback) => {
+    if (localStorage.getItem('activeButton')) {
+      console.log(localStorage.getItem('activeButton'));
+      localStorage.removeItem('activeButton');
+      localStorage.setItem('activeButton', buttonId);
+    } else {
+      localStorage.setItem('activeButton', buttonId);
+      console.log(localStorage.getItem('activeButton'));
+    }
+    if (callback) callback();
+  };
   return (
     <div className="main-container">
       <img src={ps4} alt="" className="ps4" />

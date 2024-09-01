@@ -7,6 +7,8 @@ export const UserProvider = ({ children }) => {
   const [exportName, setExportName] = useState('');
   const [exportPhotoURl, setExportPhotoURl] = useState(null);
 
+  const [activeButton, setActiveButton] = useState(null);
+
   return (
     <UserContext.Provider
       value={{
@@ -16,6 +18,8 @@ export const UserProvider = ({ children }) => {
         setExportName,
         exportPhotoURl,
         setExportPhotoURl,
+        setActiveButton,
+        activeButton,
       }}
     >
       {children}

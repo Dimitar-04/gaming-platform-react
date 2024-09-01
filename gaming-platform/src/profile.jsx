@@ -27,6 +27,7 @@ import {
   faPenToSquare,
   faComment,
   faTrash,
+  faX,
 } from '@fortawesome/free-solid-svg-icons';
 
 import { upload } from './firebase';
@@ -59,19 +60,27 @@ export default function Profile() {
   const [mediaURl, setMediaURL] = useState(null);
   const [gameTitle, setGameTitle] = useState('');
   const [eventTitle, setEventTitle] = useState('');
+  const [eventTime, setEventTime] = useState('17:00');
   const [eventDescription, setEventDescription] = useState('');
   const [eventLocation, setEventLocation] = useState('');
   const [emptyLocation, setEmptyLocation] = useState(false);
   const [emptyDate, setEmptyDate] = useState(false);
   const [eventDate, setEventDate] = useState('');
   const [emptyTitle, setEmptyTitle] = useState('false');
+  const [emptyLink, setEmptyLink] = useState('false');
+  const [falseDate, setFalseDate] = useState(false);
   const [description, setDescription] = useState('');
   const [emptyDescription, setEmptyDescription] = useState(false);
   const [focusedButton, setFocusedButton] = useState('posts');
   const [currentComment, setCurrentComment] = useState('');
+  const [backgroundPhoto, setBackgroundPhoto] = useState('');
+  const { activeButton, setActiveButton } = useContext(UserContext);
   const [mediatype, setMediaType] = useState('');
   const db = getFirestore();
+  const [goingList, setGoingList] = useState([]);
+  const goingDialog = useRef(null);
   const postsButtonRef = useRef(null);
+  const [eventLink, setEventLink] = useState('');
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -89,6 +98,9 @@ export default function Profile() {
 
           if (userData.photoURL) {
             setPhotoURL(userData.photoURL);
+          }
+          if (userData.backgroundPhoto) {
+            setBackgroundPhoto(userData.backgroundPhoto);
           }
 
           if (currentUser.displayName) {
@@ -209,6 +221,7 @@ export default function Profile() {
       updatePosts(username, photoURL);
       updateComments(username, photoURL);
       updateEvents(username, photoURL);
+      updateGoingList();
     }
   }, [currentUser, username, photoURL]);
   async function updateComments(newUsername, newPhoto) {
@@ -276,6 +289,37 @@ export default function Profile() {
     setRefresh(!refresh);
     setCurrentComment('');
   }
+  async function updateGoingList() {
+    const events = collection(db, 'events');
+    const eventsSnapshot = await getDocs(events);
+    const eventsList = eventsSnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    await Promise.all(
+      eventsList.map(async (event) => {
+        const going = event.going;
+        const eventRef = doc(db, 'events', event.id);
+        const updatedGoing = await Promise.all(
+          going.map(async (user) => {
+            const userRef = doc(db, 'users', user.id);
+            const userSnap = await getDoc(userRef);
+            const userData = userSnap.data();
+            return {
+              id: user.id,
+              name: userData.username,
+              photo: userData.photoURL,
+            };
+          })
+        );
+
+        await updateDoc(eventRef, { going: updatedGoing });
+      })
+    );
+    setRefresh(!refresh);
+  }
+
   async function deleteComment(postId, commentIndex) {
     const postDocRef = doc(db, 'posts', postId);
 
@@ -349,8 +393,9 @@ export default function Profile() {
         setLoading(false);
         dali = 1;
       }
-      if (eventLocation === '') {
+      if (eventLocation === '' && eventLink === '') {
         setEmptyLocation(true);
+        setEmptyLink(true);
         setLoading(false);
         dali = 1;
       }
@@ -359,18 +404,42 @@ export default function Profile() {
         setLoading(false);
         dali = 1;
       }
+      if (new Date(eventDate) < new Date()) {
+        console.log(new Date(eventDate));
+        console.log(new Date());
+        setFalseDate(true);
+        setLoading(false);
+        dali = 1;
+      }
       if (dali == 0) {
-        await addDoc(eventCollectionRef, {
+        const newEvent = {
           title: eventTitle,
           description: eventDescription,
           location: eventLocation,
           date: eventDate,
+          link: eventLink,
+          time: eventTime,
           author: {
             name: username,
             id: currentUser.uid,
             photo: currentUser.photoURL || photoURL,
           },
+          going: [
+            {
+              id: currentUser.uid,
+              name: username,
+              photo: currentUser.photoURL || photoURL,
+            },
+          ],
+        };
+        const docref = await addDoc(eventCollectionRef, newEvent);
+        const eventid = docref.id;
+        newEvent.id = eventid;
+
+        await updateDoc(userRef, {
+          upcomingEvents: arrayUnion(newEvent),
         });
+        setRefresh(!refresh);
         setLoading(false);
 
         eventDialogRef.current.close();
@@ -409,6 +478,16 @@ export default function Profile() {
       top.current.scrollIntoView({ behavior: 'smooth' });
     }
   }
+  const handleButtonClick = (buttonId, callback) => {
+    if (localStorage.getItem('activeButton')) {
+      console.log(localStorage.getItem('activeButton'));
+      localStorage.removeItem('activeButton');
+      localStorage.setItem('activeButton', buttonId);
+    } else {
+      localStorage.setItem('activeButton', buttonId);
+    }
+    if (callback) callback();
+  };
   return (
     <div className="main-container-home2">
       <div className="sidebar">
@@ -418,18 +497,20 @@ export default function Profile() {
           <Link to="/home" className="menu-home-link">
             <button
               className="menu-home-btn"
-              onClick={() => {
-                setRefreshingHome(true);
-                setPostsList([...originalPostsList]);
-                setShowNoPosts(false);
-                setSearchTitle('');
-                localStorage.removeItem('searchTitle');
-              }}
+              onClick={() =>
+                handleButtonClick('home', () => {
+                  setRefreshingHome(true);
+                  setPostsList([...originalPostsList]);
+                  setShowNoPosts(false);
+                  setSearchTitle('');
+                  localStorage.removeItem('searchTitle');
+                })
+              }
             >
-              <div className="menu-icon">
+              <div className="menu-icon2">
                 <FontAwesomeIcon icon={faHouse} />
               </div>
-              <div className="menu-text">
+              <div className="menu-text2">
                 <span>Home</span>
               </div>
             </button>
@@ -437,9 +518,11 @@ export default function Profile() {
           <Link to="/connect" className="menu-home-link">
             <button
               className="menu-home-btn"
-              onClick={() => {
-                localStorage.removeItem('searchTitle');
-              }}
+              onClick={() =>
+                handleButtonClick('connect', () => {
+                  localStorage.removeItem('searchTitle');
+                })
+              }
             >
               <div className="menu-icon">
                 <FontAwesomeIcon icon={faPeopleGroup} />
@@ -450,7 +533,12 @@ export default function Profile() {
             </button>
           </Link>
           <Link to="/settings" className="menu-home-link">
-            <button className="menu-home-btn">
+            <button
+              className="menu-home-btn"
+              onClick={() => {
+                handleButtonClick('settings', null);
+              }}
+            >
               <div className="menu-icon">
                 <FontAwesomeIcon icon={faGear} />
               </div>
@@ -461,7 +549,17 @@ export default function Profile() {
           </Link>
 
           <Link to="/profile" className="menu-home-link">
-            <button className="menu-home-btn">
+            <button
+              className={`menu-home-btn ${
+                (localStorage.getItem('activeButton') || activeButton) ===
+                'profile'
+                  ? 'active'
+                  : ''
+              }`}
+              onClick={() => {
+                handleButtonClick('profile', null);
+              }}
+            >
               <div className="menu-icon">
                 <img className="user-image2" src={photoURL} />
               </div>
@@ -473,12 +571,24 @@ export default function Profile() {
         </div>
       </div>
       <div className="home-main">
+        <div className="user-background-image">
+          {backgroundPhoto && (
+            <img
+              src={backgroundPhoto}
+              alt="background"
+              className="background-image-settings"
+            />
+          )}
+        </div>
         <div className="profile-basic-info" ref={top}>
-          <img src={photoURL} alt="" />
+          <img src={photoURL} />
+        </div>
+        <div className="name-username-profile">
           <div>
             <h1>{name}</h1>
             <p>{username}</p>
           </div>
+
           <Link to="/settings">
             <button className="updateProfile">UPDATE PROFILE</button>
           </Link>
@@ -602,7 +712,7 @@ export default function Profile() {
                 );
               })}
             {focusedButton === 'events' &&
-              eventList.map((post) => {
+              eventList.map((post, index) => {
                 return (
                   <>
                     {post.author.id === currentUser.uid && (
@@ -677,6 +787,26 @@ export default function Profile() {
                             alt="profilePic"
                             className="user-image-smaller"
                           />
+                          <div className="attending-going-info">
+                            <p
+                              className="attending"
+                              onClick={async () => {
+                                const postRef = doc(
+                                  db,
+                                  'events',
+                                  eventList[index].id
+                                );
+                                const postSnap = await getDoc(postRef);
+
+                                setGoingList(postSnap.data().going);
+                                goingDialog.current.showModal();
+                                console.log(goingList);
+                              }}
+                            >
+                              {post.going.length}
+                              {'   '} Attending
+                            </p>
+                          </div>
                         </div>
                       </div>
                     )}
@@ -708,7 +838,9 @@ export default function Profile() {
                 setGameTitle('');
                 setMediaURL(null);
                 setFilename('');
+
                 setEmptyTitle(false);
+                setEmptyLink(false);
                 setEmptyDescription(false);
                 dialogRef.current.showModal();
               }}
@@ -722,10 +854,13 @@ export default function Profile() {
               title="Create Event"
               onClick={() => {
                 setEventDescription('');
+                setEmptyLink(false);
+                setEventLink('');
+                setEventTime('17:00');
                 setEventTitle('');
                 setEventLocation('');
                 setEventDate('');
-                Post();
+                eventDialogRef.current.showModal();
               }}
             >
               <FontAwesomeIcon icon={faCirclePlus} />
@@ -836,6 +971,7 @@ export default function Profile() {
               type="text"
               placeholder="Name of event"
               className={emptyTitle ? 'invalid' : ''}
+              disabled={loading}
               value={eventTitle}
               onChange={(e) => {
                 setEmptyTitle(false);
@@ -849,6 +985,7 @@ export default function Profile() {
           <div className="inputFieldDescription">
             <textarea
               value={eventDescription}
+              disabled={loading}
               placeholder="Describe your event..."
               className={
                 emptyDescription ? 'invalidDescription' : 'eventDescription'
@@ -862,42 +999,87 @@ export default function Profile() {
               <p className="emptyField">Cannot leave this field empty</p>
             )}
           </div>
-
-          <div className="date-create">
-            <div className="inputFieldLocation">
-              <input
-                type="text"
-                value={eventLocation}
-                placeholder="Location"
-                id="location"
-                className={emptyLocation ? 'invalid' : ''}
-                onChange={(e) => {
-                  setEmptyLocation(false);
-                  setEventLocation(e.target.value);
-                }}
-              />
-              {emptyLocation && (
-                <p className="emptyField">Cannot leave this field empty</p>
-              )}
+          <div className="inputs">
+            <div className="date-create">
+              <div className="inputFieldLocation">
+                <input
+                  type="text"
+                  disabled={loading}
+                  value={eventLocation}
+                  placeholder="Location"
+                  id="location"
+                  className={emptyLocation ? 'invalid' : ''}
+                  onChange={(e) => {
+                    setEmptyLocation(false);
+                    setEmptyLink(false);
+                    setEventLocation(e.target.value);
+                  }}
+                />
+                {emptyLocation && (
+                  <p className="emptyField">
+                    At least one field should be filled
+                  </p>
+                )}
+              </div>
+              <div className="inputFieldLink">
+                <input
+                  type="url"
+                  placeholder="Link"
+                  id="link"
+                  disabled={loading}
+                  value={eventLink}
+                  className={emptyLink ? 'invalid' : ''}
+                  onChange={(e) => {
+                    setEmptyLink(false);
+                    setEmptyLocation(false);
+                    setEventLink(e.target.value);
+                  }}
+                ></input>
+                {emptyLink && (
+                  <p className="emptyField">
+                    At least one field should be filled
+                  </p>
+                )}
+              </div>
             </div>
-            <div className="inputFieldDate">
-              <input
-                type="date"
-                value={eventDate}
-                className={emptyDate ? 'invalidDate' : 'eventDate'}
-                onChange={(e) => {
-                  setEmptyDate(false);
-                  setEventDate(e.target.value);
-                }}
-              />
-              {emptyDate && (
-                <p className="emptyField">Cannot leave this field empty</p>
-              )}
+            <div className="LinkTime">
+              <div className="inputFieldDate">
+                <input
+                  type="date"
+                  disabled={loading}
+                  value={eventDate}
+                  className={emptyDate ? 'invalidDate' : 'eventDate'}
+                  onChange={(e) => {
+                    setEmptyDate(false);
+                    setFalseDate(false);
+                    setEventDate(e.target.value);
+                  }}
+                />
+                {emptyDate && <p className="emptyField">Cannot leave empty</p>}
+                {falseDate && (
+                  <p className="emptyField">Please enter a future date</p>
+                )}
+              </div>
+
+              <div>
+                <input
+                  type="time"
+                  defaultValue="17:00"
+                  className="time"
+                  disabled={loading}
+                  onChange={(e) => {
+                    setEventTime(e.target.value);
+                  }}
+                ></input>
+              </div>
             </div>
           </div>
-
           <div>
-            <button className="login-btn" onClick={createEvent}>
+            <button
+              className="login-btn"
+              onClick={createEvent}
+              disabled={loading}
+            >
               Create Event
             </button>
           </div>
@@ -913,6 +1095,50 @@ export default function Profile() {
         <div className="dialog-content">
           <img src={mediaURl} alt="postImage" />
         </div>
+      </dialog>
+      <dialog ref={goingDialog} id="goingDialog">
+        <div>
+          <button
+            className="close2"
+            onClick={() => {
+              goingDialog.current.close();
+            }}
+          >
+            <FontAwesomeIcon icon={faX} />
+          </button>
+        </div>
+        {goingList.map((user) => {
+          return (
+            <div className="goingList">
+              <div
+                className="goingChild"
+                onClick={() => {
+                  console.log(user.name + username);
+                  if (user.name == username) {
+                    nav('/profile');
+                  } else {
+                    setExportUsername(user.name);
+                    setExportPhotoURl(user.photo);
+                    localStorage.removeItem('name');
+                    localStorage.removeItem('username');
+                    localStorage.removeItem('photoURL');
+                  }
+                }}
+              >
+                <img
+                  src={user.photo}
+                  alt="profilePic"
+                  className="going-user-img"
+                />
+                {
+                  <Link to="/userProfile" className="customLink2">
+                    <h3>{user.name}</h3>
+                  </Link>
+                }
+              </div>
+            </div>
+          );
+        })}
       </dialog>
     </div>
   );

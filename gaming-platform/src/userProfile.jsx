@@ -70,6 +70,7 @@ export default function UserProfile() {
   const [eventDescription, setEventDescription] = useState('');
   const [eventLocation, setEventLocation] = useState('');
   const [emptyLocation, setEmptyLocation] = useState(false);
+  const [backgroundPhoto, setBackgroundPhoto] = useState('');
   const [emptyDate, setEmptyDate] = useState(false);
   const [eventDate, setEventDate] = useState('');
   const [emptyTitle, setEmptyTitle] = useState('false');
@@ -96,7 +97,8 @@ export default function UserProfile() {
         const userRef = doc(db, 'users', currentUser.uid);
         const userSnap = await getDoc(userRef);
         setCurrentUsername(userSnap.data().username);
-        if (currentUser.photoURL) {
+
+        if (currentUser.photoURL && !userSnap.data().photoURL) {
           setCurrentPhotoURL(currentUser.photoURL);
           localStorage.setItem('currentPhotoURL', currentUser.photoURL);
         } else if (userSnap.data().photoURL) {
@@ -115,6 +117,7 @@ export default function UserProfile() {
             localStorage.setItem('photoURL', exportPhotoURl);
           }
         }
+
         try {
           const usersCollection = collection(db, 'users');
           const q = query(
@@ -126,7 +129,7 @@ export default function UserProfile() {
           if (!querySnapshot.empty) {
             querySnapshot.forEach((doc) => {
               const userData = doc.data();
-              console.log(userData);
+
               if (localStorage.getItem('username')) {
                 setUsername(localStorage.getItem('username'));
               } else {
@@ -142,6 +145,11 @@ export default function UserProfile() {
               } else {
                 setPhotoURL(userData.photoURL);
               }
+              if (localStorage.getItem('backgroundPhoto')) {
+                setBackgroundPhoto(localStorage.getItem('backgroundPhoto'));
+              } else {
+                setBackgroundPhoto(userData.backgroundPhoto);
+              }
 
               // setPhotoURL(userData.photoURL);
               if (!localStorage.getItem('username')) {
@@ -149,6 +157,13 @@ export default function UserProfile() {
               }
               if (!localStorage.getItem('name')) {
                 localStorage.setItem('name', userData.name);
+              }
+              if (!localStorage.getItem('backgroundPhoto')) {
+                localStorage.setItem(
+                  'backgroundPhoto',
+
+                  userData.backgroundPhoto
+                );
               }
               if (!localStorage.getItem('photoURL')) {
                 localStorage.setItem('photoURL', exportPhotoURl);
@@ -302,6 +317,40 @@ export default function UserProfile() {
   const handleEventsClick = () => {
     setFocusedButton('events');
   };
+  useEffect(() => {
+    updateGoingList();
+  }, [currentUsername, currentUser, currentPhotoURL]);
+  async function updateGoingList() {
+    const events = collection(db, 'events');
+    const eventsSnapshot = await getDocs(events);
+    const eventsList = eventsSnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    await Promise.all(
+      eventsList.map(async (event) => {
+        const going = event.going;
+        const eventRef = doc(db, 'events', event.id);
+        const updatedGoing = await Promise.all(
+          going.map(async (user) => {
+            const userRef = doc(db, 'users', user.id);
+            const userSnap = await getDoc(userRef);
+            const userData = userSnap.data();
+            return {
+              id: user.id,
+              name: userData.username,
+              photo: userData.photoURL,
+            };
+          })
+        );
+
+        await updateDoc(eventRef, { going: updatedGoing });
+      })
+    );
+    setRefresh(!refresh);
+  }
+
   async function Post() {
     setEmptyTitle(false);
     setEmptyDescription(false);
@@ -405,6 +454,16 @@ export default function UserProfile() {
       top.current.scrollIntoView({ behavior: 'smooth' });
     }
   }
+  const handleButtonClick = (buttonId, callback) => {
+    if (localStorage.getItem('activeButton')) {
+      console.log(localStorage.getItem('activeButton'));
+      localStorage.removeItem('activeButton');
+      localStorage.setItem('activeButton', buttonId);
+    } else {
+      localStorage.setItem('activeButton', buttonId);
+    }
+    if (callback) callback();
+  };
   return (
     <div className="main-container-home2">
       <div className="sidebar">
@@ -412,17 +471,40 @@ export default function UserProfile() {
 
         <div className="menu">
           <Link to="/home" className="menu-home-link">
-            <button className="menu-home-btn">
-              <div className="menu-icon">
+            <button
+              className={`menu-home-btn ${
+                (localStorage.getItem('activeButton') || activeButton) ===
+                'home'
+                  ? 'active'
+                  : ''
+              }`}
+              onClick={() =>
+                handleButtonClick('home', () => {
+                  setRefreshingHome(true);
+                  setPostsList([...originalPostsList]);
+                  setShowNoPosts(false);
+                  setSearchTitle('');
+                  localStorage.removeItem('searchTitle');
+                })
+              }
+            >
+              <div className="menu-icon2">
                 <FontAwesomeIcon icon={faHouse} />
               </div>
-              <div className="menu-text">
+              <div className="menu-text2">
                 <span>Home</span>
               </div>
             </button>
           </Link>
           <Link to="/connect" className="menu-home-link">
-            <button className="menu-home-btn">
+            <button
+              className="menu-home-btn"
+              onClick={() =>
+                handleButtonClick('connect', () => {
+                  localStorage.removeItem('searchTitle');
+                })
+              }
+            >
               <div className="menu-icon">
                 <FontAwesomeIcon icon={faPeopleGroup} />
               </div>
@@ -432,7 +514,12 @@ export default function UserProfile() {
             </button>
           </Link>
           <Link to="/settings" className="menu-home-link">
-            <button className="menu-home-btn">
+            <button
+              className="menu-home-btn"
+              onClick={() => {
+                handleButtonClick('settings', null);
+              }}
+            >
               <div className="menu-icon">
                 <FontAwesomeIcon icon={faGear} />
               </div>
@@ -443,9 +530,14 @@ export default function UserProfile() {
           </Link>
 
           <Link to="/profile" className="menu-home-link">
-            <button className="menu-home-btn">
+            <button
+              className="menu-home-btn"
+              onClick={() => {
+                handleButtonClick('profile', null);
+              }}
+            >
               <div className="menu-icon">
-                <img className="user-image2" src={currentPhotoURL} />
+                <img className="user-image2" src={photoURL} />
               </div>
               <div className="menu-text">
                 <span>Profile</span>
@@ -456,18 +548,25 @@ export default function UserProfile() {
       </div>
 
       <div className="home-main">
+        <div className="user-background-image">
+          {backgroundPhoto && (
+            <img
+              src={backgroundPhoto}
+              alt="background"
+              className="background-image-settings"
+            />
+          )}
+        </div>
         <div className="profile-basic-info" ref={top}>
-          <img src={photoURL} alt="" />
+          <img src={photoURL} />
+        </div>
+        <div className="name-username-profile">
           <div>
             <h1>{name || exportName}</h1>
             <p>{username}</p>
           </div>
-          <Link to="/settings">
-            {username === currentUsername && (
-              <button className="updateProfile">UPDATE PROFILE</button>
-            )}
-          </Link>
         </div>
+
         <div className="profile-main">
           <div className="profile-posts">
             {focusedButton === 'posts' &&
@@ -610,7 +709,7 @@ export default function UserProfile() {
                           <div className="post-date">
                             Date:
                             {post.location !== '' && post.link === '' && (
-                              <>Location:</>
+                              <p>Location:</p>
                             )}
                             {post.location === '' && post.link !== '' && (
                               <p>Link:</p>
@@ -635,8 +734,13 @@ export default function UserProfile() {
                               {'  '}
                               {post.time}
                             </div>
-                            <div className="post-link">
+                            <div>
                               {post.location !== '' && post.location}
+                              {post.location === '' && post.link !== '' && (
+                                <a href={post.link} className="post-link">
+                                  {post.link}{' '}
+                                </a>
+                              )}
                             </div>
                             <div className="post-link">
                               {post.location !== '' && post.link !== '' && (

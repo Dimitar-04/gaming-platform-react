@@ -33,7 +33,25 @@ export async function upload(file, currentUser, setLoading) {
   );
   updateProfile(currentUser, { photoURL: phurl });
   setLoading(false);
-  alert('Uploaded');
+}
+export async function uploadBackground(
+  file,
+  currentUser,
+  setLoadingBackground
+) {
+  const fileRef = ref(Storage, `background-photos/${currentUser.uid}`);
+  setLoadingBackground(true);
+  const snapshot = await uploadBytes(fileRef, file);
+  const phurl = await getDownloadURL(fileRef);
+  await setDoc(
+    doc(db, 'users', currentUser.uid),
+    {
+      backgroundPhoto: phurl,
+    },
+    { merge: true }
+  );
+  updateProfile(currentUser, { photoURL: phurl });
+  setLoadingBackground(false);
 }
 
 export { googlProvider };
