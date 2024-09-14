@@ -1,7 +1,9 @@
 import logo from './images/logo-light.png';
 import React, { useContext, useEffect, useState, useRef } from 'react';
 import { useAuth } from './contexts/AuthContext';
+
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import warning from './images/warning.png';
 import {
   getFirestore,
   doc,
@@ -104,6 +106,7 @@ export default function Home() {
       if (currentUser && currentUser.uid) {
         const userRef = doc(db, 'users', currentUser.uid);
         const userSnap = await getDoc(userRef);
+        nav('/home', { replace: true });
         // if (
         //   currentUser.photoURL
         //   // currentUser.photoURL.includes('googleusercontent.com')
@@ -143,6 +146,7 @@ export default function Home() {
             const newName = currentUser.displayName;
             await updateDoc(userRef, { name: newName });
           }
+          console.log(userData);
           if (!userSnap.data().photoURL && currentUser.photoURL) {
             await updateDoc(userRef, { photoURL: currentUser.photoURL });
           }
@@ -154,7 +158,7 @@ export default function Home() {
     };
 
     fetchUserProfile();
-  }, [currentUser]);
+  }, [currentUser, nav]);
 
   useEffect(() => {
     if (currentUser) {
@@ -199,7 +203,7 @@ export default function Home() {
           author: {
             name: username,
             id: currentUser.uid,
-            photo: currentUser.photoURL,
+            photo: profilePic,
           },
         });
         setLoading(false);
@@ -326,10 +330,7 @@ export default function Home() {
     setCurrentComment('');
   }
   const toggleCommentSection = (postId) => {
-    setActivePostIds((prevState) => ({
-      ...prevState,
-      [postId]: !prevState[postId],
-    }));
+    setActivePostIds((prevPostId) => (prevPostId === postId ? null : postId));
   };
   async function deleteComment(postId, commentIndex) {
     const postDocRef = doc(db, 'posts', postId);
@@ -355,6 +356,7 @@ export default function Home() {
     await updateDoc(userRef, {
       favourites: arrayUnion(newFavouriteGame),
     });
+
     setNewFavouriteGame('');
     setAddFavourites(false);
   }
@@ -371,6 +373,13 @@ export default function Home() {
     }
   }, [originalPostsList]);
   useEffect(() => {
+    if (addFavourites) {
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          setAddFavourites(false);
+        }
+      });
+    }
     const fetchFavourites = async () => {
       const userRef = doc(db, 'users', currentUser.uid);
       const userSnap = await getDoc(userRef);
@@ -380,7 +389,7 @@ export default function Home() {
       }
     };
     fetchFavourites();
-  }, [favourites, currentUser]);
+  }, [favourites, currentUser, addFavourites]);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -422,19 +431,18 @@ export default function Home() {
       await logout();
       localStorage.removeItem('currentPhotoURL');
       localStorage.removeItem('currentUsername');
-      nav('/');
+      nav('/', { replace: true });
     } catch (error) {
       alert('Failed to log out', error.message);
     }
   }
   const handleButtonClick = (buttonId, callback) => {
     if (localStorage.getItem('activeButton')) {
-      console.log(localStorage.getItem('activeButton'));
       localStorage.removeItem('activeButton');
       localStorage.setItem('activeButton', buttonId);
+      console.log(localStorage.getItem('activeButton'));
     } else {
       localStorage.setItem('activeButton', buttonId);
-      console.log(localStorage.getItem('activeButton'));
     }
     if (callback) callback();
   };
@@ -510,7 +518,7 @@ export default function Home() {
                 handleButtonClick('profile', null);
               }}
             >
-              <div className="menu-icon">
+              <div className="menu-icon3">
                 <img className="user-image2" src={profilePic} />
               </div>
               <div className="menu-text">
@@ -556,19 +564,22 @@ export default function Home() {
                   className={
                     hoveredPosts.includes(post.id) ? 'post-hovers' : 'posts'
                   }
-                  onClick={() => {
-                    if (post.author.id === currentUser.uid) {
-                      nav('/profile');
-                    } else {
-                      setExportUsername(post.author.name);
-                      setExportPhotoURl(post.author.photo);
-                    }
+                  onClick={(e) => {
+                    setExportUsername(post.author.name);
+                    setExportPhotoURl(post.author.photo);
 
                     localStorage.removeItem('name');
                     localStorage.removeItem('username');
-                    handleButtonClick('home', null);
+                    if (post.author.id === currentUser.uid) {
+                      handleButtonClick('profile', null);
+                    } else {
+                      console.log('razlicni');
+                      handleButtonClick('home', null);
+                    }
+
                     localStorage.removeItem('photoURL');
                     localStorage.removeItem('backgroundPhoto');
+                    e.stopPropagation();
                   }}
                 >
                   <div className="author">
@@ -577,9 +588,16 @@ export default function Home() {
                       alt="profilePic"
                       className="user-image-small"
                     />
-                    <Link to="/userProfile" className="customLink2">
-                      <p>{post.author.name}</p>
-                    </Link>
+                    {post.author.id === currentUser.uid && (
+                      <Link to="/profile" className="customLink2">
+                        <p>{post.author.name}</p>
+                      </Link>
+                    )}
+                    {post.author.id !== currentUser.uid && (
+                      <Link to="/userProfile" className="customLink2">
+                        <p>{post.author.name}</p>
+                      </Link>
+                    )}
 
                     {post.author.id === currentUser.uid && (
                       <button
@@ -634,7 +652,7 @@ export default function Home() {
                     <FontAwesomeIcon icon={faComment} />
                   </button>
                 </div>
-                {activePostIds[post.id] && (
+                {activePostIds === post.id && (
                   <div className="comment-section">
                     <div className="comment">
                       <img
@@ -715,7 +733,15 @@ export default function Home() {
             <img className="user-image" src={profilePic} alt="priflePic" />
           </div>
 
-          <p className="username-info">{username}</p>
+          <p
+            className="username-info"
+            onClick={() => {
+              handleButtonClick('profile', null);
+              nav('/profile');
+            }}
+          >
+            {username}
+          </p>
           <button
             style={{
               background: 'none',
@@ -956,8 +982,13 @@ export default function Home() {
       </dialog>
       <dialog ref={deleteDialogRef} className="deleteDialog">
         <div className="deleteDialog-content">
-          {isDeletePost && <h2>Are you sure you want to delete this post?</h2>}
-          {isLogOut && <h2>Log out?</h2>}
+          {isDeletePost && <h2>Are you sure you want to proceed?</h2>}
+          {isLogOut && (
+            <h2>
+              Are you sure you want to{' '}
+              <span style={{ color: 'firebrick' }}>log out </span>?
+            </h2>
+          )}
           <button
             className="close3"
             onClick={() => {
@@ -965,9 +996,12 @@ export default function Home() {
               setIsDeletePost(false);
               setIsLogOut(false);
             }}
+            title="Close"
           >
             X
           </button>
+
+          <img src={warning} className="warning"></img>
 
           <div
             style={{

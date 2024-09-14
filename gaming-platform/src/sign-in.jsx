@@ -15,7 +15,8 @@ const db = getFirestore();
 function Sign_in() {
   const emailRef = useRef();
   const passwordRef = useRef();
-
+  const [incorectPassword, setIncorectPassword] = useState(false);
+  const [incorrectEmail, setIncorrectEmail] = useState(false);
   const navigate = useNavigate();
 
   const { login } = useAuth();
@@ -25,10 +26,12 @@ function Sign_in() {
   const [loading, setLoading] = useState(false);
 
   const handlePasswordChange = () => {
+    setIncorectPassword(false);
     setInvalidPassword(false);
   };
   const handleEmailChange = () => {
     if (emailRef.current.value.trim() !== '') {
+      setIncorrectEmail(false);
       setInvalidEmail(false);
     }
   };
@@ -50,11 +53,33 @@ function Sign_in() {
         setLoading(true);
         handleButtonClick('home', null);
         await login(emailRef.current.value, passwordRef.current.value);
-        navigate('/home');
+        navigate('/home', { replace: true });
       } catch (error) {
-        alert(`Failed to sign in ${error.message}`);
+        handleFirebaseAuthError(error);
       }
       setLoading(false);
+    }
+  }
+  function handleFirebaseAuthError(error) {
+    const errorCode = error.code;
+    switch (errorCode) {
+      case 'auth/invalid-email':
+        setInvalidEmail(true);
+        alert('Invalid email format.');
+        break;
+      case 'auth/user-disabled':
+        alert('User account is disabled.');
+        break;
+      case 'auth/user-not-found':
+        setIncorrectEmail(true);
+
+        break;
+      case 'auth/wrong-password':
+        setIncorectPassword(true);
+
+        break;
+      default:
+        alert(`Failed to sign in: ${error.message}`);
     }
   }
   async function handlesignInWithGoogle() {
@@ -72,7 +97,7 @@ function Sign_in() {
         });
       }
       handleButtonClick('home', null);
-      navigate('/home');
+      navigate('/home', { replace: true });
     } catch (error) {
       alert(`Failed to sign in ${error.message}`);
     }
@@ -106,11 +131,14 @@ function Sign_in() {
                 id="sign-in-email"
                 placeholder="E-mail"
                 ref={emailRef}
-                className={invalidEmail ? 'invalid' : ''}
+                className={invalidEmail || incorrectEmail ? 'invalid' : ''}
                 onChange={handleEmailChange}
               />
               {invalidEmail && (
                 <p className="error-message">Cannot leave this field empty</p>
+              )}
+              {incorrectEmail && (
+                <p className="error-message">Email doesn't exist</p>
               )}
             </div>
             <div className="password">
@@ -121,23 +149,30 @@ function Sign_in() {
                 id="password"
                 placeholder="Password"
                 ref={passwordRef}
-                className={invalidPassword ? 'invalid' : ''}
+                className={invalidPassword || incorectPassword ? 'invalid' : ''}
                 onChange={handlePasswordChange}
               />
               {invalidPassword && (
                 <p className="error-message">Cannot leave this field empty</p>
               )}
+              {incorectPassword && (
+                <p className="error-message">Incorrect password</p>
+              )}
             </div>
             <div className="buttons">
-              <button className="login-btn" type="submit" disabled={loading}>
-                Log In
+              <button
+                className="login-btn"
+                type="button"
+                onClick={() => {
+                  navigate('/signupPage', { replace: true });
+                }}
+              >
+                Sign Up
               </button>
 
-              <Link to="/signupPage">
-                <button className="signup-btn" type="button">
-                  Sign Up
-                </button>
-              </Link>
+              <button className="signup-btn" type="submit" disabled={loading}>
+                Log In
+              </button>
             </div>
             <div className="forgot-google">
               <button

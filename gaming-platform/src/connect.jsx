@@ -15,7 +15,7 @@ import {
   deleteDoc,
   arrayUnion,
 } from 'firebase/firestore';
-
+import warning from './images/warning.png';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Link, useNavigate } from 'react-router-dom';
 import {
@@ -28,12 +28,14 @@ import {
   faTrash,
   faCheck,
   faX,
+  faL,
 } from '@fortawesome/free-solid-svg-icons';
 import { UserContext } from './contexts/UserContext';
 import { auth } from './firebase';
 
 export default function Connect() {
   const { currentUser, logout } = useAuth();
+  const [isDeletePost, setIsDeletePost] = useState(false);
   const [username, setUsername] = useState('');
   const [loading, setLoading] = useState(true);
   const [userexists, setUserExists] = useState(false);
@@ -49,6 +51,7 @@ export default function Connect() {
   const [goingList, setGoingList] = useState([]);
   const [falseDate, setFalseDate] = useState(false);
   const [eventTitle, setEventTitle] = useState('');
+  const [deletePostId, setDeletePostId] = useState('');
   const [originalEventList, setOriginalEventList] = useState([]);
   const [eventDescription, setEventDescription] = useState('');
   const [eventLocation, setEventLocation] = useState('');
@@ -69,6 +72,7 @@ export default function Connect() {
   const goingDialog = useRef(null);
   const { activeButton, setActiveButton } = useContext(UserContext);
   const [showNoPosts, setShowNoPosts] = useState(false);
+  const deleteDialogRef = useRef(null);
   const { setExportName, setExportPhotoURl, setExportUsername } =
     useContext(UserContext);
 
@@ -91,6 +95,7 @@ export default function Connect() {
           const userData = userSnap.data();
           setUsername(userData.username);
           if (userData.photoURL) {
+            console.log(userData.photoURL);
             setPhotoURL(userData.photoURL);
           }
           setLoading(false);
@@ -148,13 +153,12 @@ export default function Connect() {
         dali = 1;
       }
       if (new Date(eventDate) < new Date()) {
-        console.log(new Date(eventDate));
-        console.log(new Date());
         setFalseDate(true);
         setLoading(false);
         dali = 1;
       }
       if (dali == 0) {
+        console.log(photoURL);
         const newEvent = {
           title: eventTitle,
           description: eventDescription,
@@ -165,13 +169,13 @@ export default function Connect() {
           author: {
             name: username,
             id: currentUser.uid,
-            photo: currentUser.photoURL || photoURL,
+            photo: photoURL,
           },
           going: [
             {
               id: currentUser.uid,
               name: username,
-              photo: currentUser.photoURL || photoURL,
+              photo: photoURL,
             },
           ],
         };
@@ -294,7 +298,6 @@ export default function Connect() {
 
     await Promise.all(
       eventsList.map(async (event) => {
-        console.log(event);
         const going = event.going;
         const eventRef = doc(db, 'events', event.id);
         const updatedGoing = await Promise.all(
@@ -542,7 +545,7 @@ export default function Connect() {
                 handleButtonClick('profile', null);
               }}
             >
-              <div className="menu-icon">
+              <div className="menu-icon3">
                 <img className="user-image2" src={photoURL} />
               </div>
               <div className="menu-text">
@@ -580,7 +583,9 @@ export default function Connect() {
           {eventList.length === 0 && !showNoPosts && (
             <div className="spinner"></div>
           )}
-          {showNoPosts && <p className="noPosts">NO EVENTS FOUND</p>}
+          {(showNoPosts || eventList.length == 0) && (
+            <p className="noPosts">NO EVENTS FOUND</p>
+          )}
           {eventList.map((post, index) => {
             const isGoing = goingStatus[post.id] || false;
             return (
@@ -595,6 +600,7 @@ export default function Connect() {
                     localStorage.removeItem('name');
                     localStorage.removeItem('username');
                     localStorage.removeItem('photoURL');
+                    handleButtonClick('connect', null);
                   }}
                 >
                   <div className="title-delete">
@@ -603,7 +609,9 @@ export default function Connect() {
                       <button
                         className="trash"
                         onClick={() => {
-                          deletePost(post.id);
+                          setDeletePostId(post.id);
+                          setIsDeletePost(true);
+                          deleteDialogRef.current.showModal();
                         }}
                       >
                         <FontAwesomeIcon icon={faTrash} />
@@ -635,7 +643,7 @@ export default function Connect() {
                         {'  '}
                         {post.time}
                       </div>
-                      <div>
+                      <div className="post-link">
                         {post.location !== '' && post.location}
                         {post.location === '' && post.link !== '' && (
                           <a href={post.link} className="post-link">
@@ -872,6 +880,7 @@ export default function Connect() {
                   localStorage.removeItem('name');
                   localStorage.removeItem('username');
                   localStorage.removeItem('photoURL');
+                  handleButtonClick('connect', null);
                 }}
               >
                 <div className="title-delete">
@@ -910,8 +919,9 @@ export default function Connect() {
                     <button
                       className="trash"
                       onClick={() => {
-                        console.log(post.id);
-                        deletePost(post.id || post.author.id);
+                        setIsDeletePost(true);
+                        setDeletePostId(post.id || post.author.id);
+                        deleteDialogRef.current.showModal();
                       }}
                     >
                       <FontAwesomeIcon icon={faTrash} />
@@ -943,7 +953,7 @@ export default function Connect() {
                       {'  '}
                       {post.time}
                     </div>
-                    <div className>
+                    <div className="post-link">
                       {post.location !== '' && post.location}
                       {post.location === '' && post.link !== '' && (
                         <a href={post.link} target="_blank">
@@ -968,7 +978,7 @@ export default function Connect() {
                   <img
                     src={post.author.photo}
                     alt="profilePic"
-                    className="user-image-smaller"
+                    className="user-image-smaller2"
                   />
                   {currentUser.uid !== post.author.id && (
                     <button
@@ -1006,6 +1016,7 @@ export default function Connect() {
                 onClick={() => {
                   setExportUsername(user.name);
                   setExportPhotoURl(user.photo);
+                  handleButtonClick('connect', null);
                   localStorage.removeItem('name');
                   localStorage.removeItem('username');
                   localStorage.removeItem('photoURL');
@@ -1023,6 +1034,56 @@ export default function Connect() {
             </div>
           );
         })}
+      </dialog>
+      <dialog ref={deleteDialogRef} className="deleteDialog">
+        <div className="deleteDialog-content">
+          {isDeletePost && <h2>Are you sure you want to proceed?</h2>}
+
+          <button
+            className="close3"
+            onClick={() => {
+              deleteDialogRef.current.close();
+              setIsDeletePost(false);
+            }}
+            title="Close"
+          >
+            X
+          </button>
+
+          <img src={warning} className="warning"></img>
+
+          <div
+            style={{
+              width: '100%',
+              display: 'flex',
+              justifyContent: 'center',
+              gap: '10%',
+            }}
+          >
+            <button
+              className="yesbtn"
+              onClick={() => {
+                if (isDeletePost) {
+                  deletePost(deletePostId);
+                  setIsDeletePost(false);
+                }
+                deleteDialogRef.current.close();
+              }}
+            >
+              Yes
+            </button>
+            <button
+              className="nobtn"
+              onClick={() => {
+                setIsDeletePost(false);
+                setIsLogOut(false);
+                deleteDialogRef.current.close();
+              }}
+            >
+              No
+            </button>
+          </div>
+        </div>
       </dialog>
     </div>
   );

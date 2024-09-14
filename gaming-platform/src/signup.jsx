@@ -34,16 +34,20 @@ function Signup() {
   const [invalidUsername, setInvalidUsername] = useState(false);
   const [loading, setLoading] = useState(false);
   const [userExists, setUserExists] = useState(false);
+  const [shortUsername, setShortUsername] = useState(false);
+  const [shortPassword, setShortPassword] = useState(false);
 
   const handleUsernameChange = () => {
     if (usernameRef.current.value.trim() !== '') {
       setInvalidUsername(false);
+      setShortUsername(false);
     }
   };
   const handlePasswordChange = () => {
     setInvalidMatch(false);
     setInvalidPassword(false);
     setInvalidConfirm(false);
+    setShortPassword(false);
   };
   const handleEmailChange = () => {
     if (emailRef.current.value.trim() !== '') {
@@ -76,9 +80,23 @@ function Signup() {
       setInvalidPassword(true);
       dali = 1;
     }
+    if (
+      passwordRef.current.value.length < 7 &&
+      passwordRef.current.value !== ''
+    ) {
+      setShortPassword(true);
+      dali = 1;
+    }
     if (confirmRef.current.value === '') {
       setInvalidConfirm(true);
       dali = 1;
+    }
+    if (
+      (usernameRef.current.value.length < 5 ||
+        usernameRef.current.value.length > 21) &&
+      usernameRef.current.value !== ''
+    ) {
+      setShortUsername(true);
     }
 
     if (dali == 0) {
@@ -109,7 +127,8 @@ function Signup() {
               username: usernameRef.current.value,
               phone: phoneRef.current.value,
             });
-            nav('/home');
+            handleButtonClick('home', null);
+            nav('/home', { replace: true });
           } catch (error) {
             alert(`Failed to create an account ${error.message}`);
           }
@@ -118,6 +137,16 @@ function Signup() {
     }
     setLoading(false);
   }
+  const handleButtonClick = (buttonId, callback) => {
+    if (localStorage.getItem('activeButton')) {
+      console.log(localStorage.getItem('activeButton'));
+      localStorage.removeItem('activeButton');
+      localStorage.setItem('activeButton', buttonId);
+    } else {
+      localStorage.setItem('activeButton', buttonId);
+    }
+    if (callback) callback();
+  };
 
   return (
     <div className="main-container">
@@ -126,7 +155,7 @@ function Signup() {
       <img src={keyboard} alt="" className="keyboard" />
       <div className="signup-container">
         <img src={logo} alt="logo" className="logo" />
-        <h1 className="signup-h1">Join the Vault Community!</h1>
+        <h1 className="signup-h1">Join the Vault Gaming Community!</h1>
 
         <form action="" method="post" id="signup-form" onSubmit={handleSubmit}>
           <div className="signup-info">
@@ -169,7 +198,7 @@ function Signup() {
                   id="password"
                   name="password"
                   ref={passwordRef}
-                  className={invalidPassword ? 'invalid' : ''}
+                  className={invalidPassword || shortPassword ? 'invalid' : ''}
                   onChange={handlePasswordChange}
                 />
                 {invalidMatch && (
@@ -177,6 +206,11 @@ function Signup() {
                 )}
                 {invalidPassword && (
                   <p className="error-message">Cannot leave this field empty</p>
+                )}
+                {shortPassword && (
+                  <p className="error-message">
+                    Password must be at least 7 characters
+                  </p>
                 )}
               </div>
             </div>
@@ -197,6 +231,11 @@ function Signup() {
                 )}
                 {userExists && (
                   <p className="error-message">Username already exists</p>
+                )}
+                {shortUsername && (
+                  <p className="error-message">
+                    Username must be 5-15 characters
+                  </p>
                 )}
               </div>
 
@@ -230,7 +269,19 @@ function Signup() {
           </button>
 
           <p>
-            Already have an account? <Link to="/">Log in</Link>
+            Already have an account?{' '}
+            <span
+              style={{
+                color: 'blue',
+                textDecoration: 'none',
+                cursor: 'pointer',
+              }}
+              onClick={() => {
+                nav('/', { replace: true });
+              }}
+            >
+              Log in
+            </span>
           </p>
         </form>
       </div>

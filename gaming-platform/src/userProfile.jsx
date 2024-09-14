@@ -1,5 +1,5 @@
 import logo from './images/logo-light.png';
-import React, { useContext, useEffect, useState, useRef } from 'react';
+import React, { useContext, useEffect, useState, useRef, act } from 'react';
 import { useAuth } from './contexts/AuthContext';
 import {
   getFirestore,
@@ -122,7 +122,11 @@ export default function UserProfile() {
           const usersCollection = collection(db, 'users');
           const q = query(
             usersCollection,
-            where('username', '==', exportUsername)
+            where(
+              'username',
+              '==',
+              exportUsername || localStorage.getItem('username')
+            )
           );
           const querySnapshot = await getDocs(q);
 
@@ -456,7 +460,6 @@ export default function UserProfile() {
   }
   const handleButtonClick = (buttonId, callback) => {
     if (localStorage.getItem('activeButton')) {
-      console.log(localStorage.getItem('activeButton'));
       localStorage.removeItem('activeButton');
       localStorage.setItem('activeButton', buttonId);
     } else {
@@ -473,14 +476,10 @@ export default function UserProfile() {
           <Link to="/home" className="menu-home-link">
             <button
               className={`menu-home-btn ${
-                (localStorage.getItem('activeButton') || activeButton) ===
-                'home'
-                  ? 'active'
-                  : ''
+                localStorage.getItem('activeButton') === 'home' ? 'active' : ''
               }`}
               onClick={() =>
                 handleButtonClick('home', () => {
-                  setRefreshingHome(true);
                   setPostsList([...originalPostsList]);
                   setShowNoPosts(false);
                   setSearchTitle('');
@@ -498,7 +497,11 @@ export default function UserProfile() {
           </Link>
           <Link to="/connect" className="menu-home-link">
             <button
-              className="menu-home-btn"
+              className={`menu-home-btn ${
+                localStorage.getItem('activeButton') === 'connect'
+                  ? 'active'
+                  : ''
+              }`}
               onClick={() =>
                 handleButtonClick('connect', () => {
                   localStorage.removeItem('searchTitle');
@@ -531,13 +534,17 @@ export default function UserProfile() {
 
           <Link to="/profile" className="menu-home-link">
             <button
-              className="menu-home-btn"
+              className={`menu-home-btn ${
+                localStorage.getItem('activeButton') === 'profile'
+                  ? 'active'
+                  : ''
+              }`}
               onClick={() => {
                 handleButtonClick('profile', null);
               }}
             >
-              <div className="menu-icon">
-                <img className="user-image2" src={photoURL} />
+              <div className="menu-icon3">
+                <img className="user-image2" src={currentPhotoURL} />
               </div>
               <div className="menu-text">
                 <span>Profile</span>

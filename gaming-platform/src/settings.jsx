@@ -24,6 +24,8 @@ import {
   faUser,
   faPenToSquare,
   faPen,
+  faCamera,
+  faCheck,
 } from '@fortawesome/free-solid-svg-icons';
 
 import { upload, uploadBackground } from './firebase';
@@ -37,6 +39,7 @@ export default function Settings() {
     'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRFCzxivJXCZk0Kk8HsHujTO3Olx0ngytPrWw&s'
   );
   const [photo, setPhoto] = useState(null);
+  const [invalidUsername, setInvalidUsername] = useState(false);
   const [name, setName] = useState('');
   const [backgroundPhoto, setBackgroundPhoto] = useState(null);
   const usernameRef = useRef(null);
@@ -50,6 +53,8 @@ export default function Settings() {
   const toggleEdit = () => setIsEditing(!isEditing);
   const db = getFirestore();
 
+  const [isDarkTheme, setIsDarkTheme] = useState(true);
+
   const handleUsernameChange = (e) => {
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
@@ -57,11 +62,32 @@ export default function Settings() {
       }
     });
     setUserExists(false);
+    setInvalidUsername(false);
     setEditUsername(e.target.value);
   };
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setInvalidUsername(false);
+        setUserExists(false);
+        setIsEditing(false);
+      } else if (e.key === 'Enter') {
+        saveUsername();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [editUsername]);
 
   const saveUsername = async () => {
     if (editUsername !== '') {
+      if (editUsername.length < 5 || editUsername.length > 15) {
+        setInvalidUsername(true);
+        return;
+      }
       setLoading(true);
       const usersRef = collection(db, 'users');
       const q = query(
@@ -207,8 +233,6 @@ export default function Settings() {
   }, [currentUser]);
   const handleButtonClick = (buttonId, callback) => {
     if (localStorage.getItem('activeButton')) {
-      console.log(localStorage.getItem('activeButton'));
-      console.log(buttonId);
       localStorage.removeItem('activeButton');
       localStorage.setItem('activeButton', buttonId);
     } else {
@@ -216,6 +240,28 @@ export default function Settings() {
     }
     if (callback) callback();
   };
+
+  // useEffect(() => {
+  //   if (isDarkTheme) {
+  //     document.documentElement.style.setProperty(
+  //       '--dark-background-color',
+  //       'rgb(11, 11, 102)'
+  //     );
+  //     document.documentElement.style.setProperty(
+  //       '--dark-background-secondary-color',
+  //       'whitesmoke'
+  //     );
+  //   } else {
+  //     document.documentElement.style.setProperty(
+  //       '--dark-background-color',
+  //       'white'
+  //     );
+  //     document.documentElement.style.setProperty(
+  //       '--dark-background-secondary-color',
+  //       'rgb(11, 11, 102)'
+  //     );
+  //   }
+  // }, [isDarkTheme]);
   return (
     <div className="main-container-home2">
       <div className="sidebar">
@@ -284,7 +330,7 @@ export default function Settings() {
                 handleButtonClick('profile', null);
               }}
             >
-              <div className="menu-icon">
+              <div className="menu-icon3">
                 <img className="user-image2" src={photoURL} />
               </div>
               <div className="menu-text">
@@ -336,11 +382,18 @@ export default function Settings() {
                       : 'pointer',
                 }}
               >
-                {uploadStatus === 'uploading'
-                  ? 'Uploading...'
-                  : uploadStatus === 'uploaded'
-                  ? 'Uploaded'
-                  : 'Change Photo'}
+                {uploadStatus === 'uploading' ? (
+                  'Uploading...'
+                ) : uploadStatus === 'uploaded' ? (
+                  'Uploaded'
+                ) : (
+                  <div style={{ textAlign: 'center', fontSize: '1.3rem' }}>
+                    <span>Change Photo</span>
+                    <div className="icon-container" style={{ marginTop: '4%' }}>
+                      <FontAwesomeIcon icon={faCamera} />
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -388,15 +441,7 @@ export default function Settings() {
                     }
                   })}
 
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '15px',
-                      height: '100%',
-                      width: '100%',
-                    }}
-                  >
+                  <div className="edit-username-div">
                     <input
                       type="text"
                       value={editUsername}
@@ -404,35 +449,34 @@ export default function Settings() {
                       ref={usernameRef}
                       placeholder="Enter new username"
                       id="change-username"
-                      className={userexists ? 'invalid' : ''}
+                      className={userexists || invalidUsername ? 'invalid' : ''}
                     />
                     {userexists && (
                       <p className="error-message2">Username already exists</p>
                     )}
+                    {invalidUsername && (
+                      <p className="error-message2">
+                        Username must be 5-15 characters
+                      </p>
+                    )}
 
-                    <button onClick={saveUsername}>Save</button>
+                    <button onClick={saveUsername} className="faCheck">
+                      <FontAwesomeIcon icon={faCheck} />
+                    </button>
                   </div>
                 </>
               ) : (
                 <>
-                  <div
-                    style={{
-                      display: 'flex',
-                      gap: '15px',
-                      alignItems: 'center',
-                      height: '100%',
-                      width: '100%',
-                    }}
-                  >
+                  <div className="edit-username-div">
                     <h2> {username}</h2>
                     <button
                       className="edit-btn"
                       onClick={() => {
-                        setEditUsername('');
+                        setEditUsername(username);
                         toggleEdit();
                       }}
                     >
-                      <FontAwesomeIcon icon={faPenToSquare} />
+                      <FontAwesomeIcon icon={faPen} />
                     </button>
                   </div>
                 </>

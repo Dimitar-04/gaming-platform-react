@@ -29,7 +29,7 @@ import {
   faTrash,
   faX,
 } from '@fortawesome/free-solid-svg-icons';
-
+import warning from './images/warning.png';
 import { upload } from './firebase';
 const db = getFirestore();
 const postCollectionRef = collection(db, 'posts');
@@ -44,12 +44,16 @@ export default function Profile() {
   const [photoURL, setPhotoURL] = useState(
     'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRFCzxivJXCZk0Kk8HsHujTO3Olx0ngytPrWw&s'
   );
+  const deleteDialogRef = useRef(null);
+  const [deletePostId, setDelePostId] = useState('');
   const [photo, setPhoto] = useState(null);
   const [filename, setFilename] = useState('');
   const usernameRef = useRef(null);
   const [name, setName] = useState('');
   const nav = useNavigate();
   const [refresh, setRefresh] = useState(false);
+  const { exportUsername, setExportUsername, setExportPhotoURl } =
+    useContext(UserContext);
   const [postsList, setPostsList] = useState([]);
   const [activePostIds, setActivePostIds] = useState({});
   const [eventList, setEventList] = useState([]);
@@ -81,6 +85,7 @@ export default function Profile() {
   const goingDialog = useRef(null);
   const postsButtonRef = useRef(null);
   const [eventLink, setEventLink] = useState('');
+  const [isDeleteEvent, setIsDeleteEvent] = useState(false);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -499,7 +504,6 @@ export default function Profile() {
               className="menu-home-btn"
               onClick={() =>
                 handleButtonClick('home', () => {
-                  setRefreshingHome(true);
                   setPostsList([...originalPostsList]);
                   setShowNoPosts(false);
                   setSearchTitle('');
@@ -549,6 +553,7 @@ export default function Profile() {
           </Link>
 
           <Link to="/profile" className="menu-home-link">
+            {console.log(localStorage.getItem('activeButton'))}
             <button
               className={`menu-home-btn ${
                 (localStorage.getItem('activeButton') || activeButton) ===
@@ -560,7 +565,7 @@ export default function Profile() {
                 handleButtonClick('profile', null);
               }}
             >
-              <div className="menu-icon">
+              <div className="menu-icon3">
                 <img className="user-image2" src={photoURL} />
               </div>
               <div className="menu-text">
@@ -590,7 +595,14 @@ export default function Profile() {
           </div>
 
           <Link to="/settings">
-            <button className="updateProfile">UPDATE PROFILE</button>
+            <button
+              className="updateProfile"
+              onClick={() => {
+                handleButtonClick('settings', null);
+              }}
+            >
+              UPDATE PROFILE
+            </button>
           </Link>
         </div>
         <div className="profile-main">
@@ -613,7 +625,8 @@ export default function Profile() {
                             <button
                               className="trash"
                               onClick={() => {
-                                deletePost(post.id);
+                                setDelePostId(post.id);
+                                deleteDialogRef.current.showModal();
                               }}
                             >
                               <FontAwesomeIcon icon={faTrash} />
@@ -723,7 +736,9 @@ export default function Profile() {
                             <button
                               className="trash"
                               onClick={() => {
-                                deleteEvent(post.id);
+                                setDelePostId(post.id);
+                                setIsDeleteEvent(true);
+                                deleteDialogRef.current.showModal();
                               }}
                             >
                               <FontAwesomeIcon icon={faTrash} />
@@ -1113,15 +1128,17 @@ export default function Profile() {
               <div
                 className="goingChild"
                 onClick={() => {
-                  console.log(user.name + username);
                   if (user.name == username) {
                     nav('/profile');
                   } else {
                     setExportUsername(user.name);
                     setExportPhotoURl(user.photo);
+                    handleButtonClick('profile', null);
+
                     localStorage.removeItem('name');
                     localStorage.removeItem('username');
                     localStorage.removeItem('photoURL');
+                    localStorage.removeItem('backgroundPhoto');
                   }
                 }}
               >
@@ -1139,6 +1156,55 @@ export default function Profile() {
             </div>
           );
         })}
+      </dialog>
+      <dialog ref={deleteDialogRef} className="deleteDialog">
+        <div className="deleteDialog-content">
+          <h2>Are you sure you want to proceed?</h2>
+
+          <button
+            className="close3"
+            onClick={() => {
+              deleteDialogRef.current.close();
+            }}
+            title="Close"
+          >
+            X
+          </button>
+
+          <img src={warning} className="warning"></img>
+
+          <div
+            style={{
+              width: '100%',
+              display: 'flex',
+              justifyContent: 'center',
+              gap: '10%',
+            }}
+          >
+            <button
+              className="yesbtn"
+              onClick={() => {
+                if (isDeleteEvent) {
+                  deleteEvent(deletePostId);
+                } else {
+                  deletePost(deletePostId);
+                }
+
+                deleteDialogRef.current.close();
+              }}
+            >
+              Yes
+            </button>
+            <button
+              className="nobtn"
+              onClick={() => {
+                deleteDialogRef.current.close();
+              }}
+            >
+              No
+            </button>
+          </div>
+        </div>
       </dialog>
     </div>
   );
